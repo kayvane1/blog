@@ -1,0 +1,130 @@
+@import "tailwindcss";
+
+:root {
+  color-scheme: light;
+  --paper: #f6f3ec;
+  --paper-bright: #fbfaf7;
+  --ink: #141413;
+  --ink-muted: #4c4a45;
+  --accent: #0f766e;
+  --grid: rgba(20, 20, 19, 0.08);
+  --ring: rgba(15, 118, 110, 0.18);
+  --font-sans: "Space Grotesk", "Helvetica Neue", Arial, sans-serif;
+  --font-mono: "IBM Plex Mono", "SFMono-Regular", Menlo, Monaco, Consolas,
+    "Liberation Mono", "Courier New", monospace;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-sans);
+  color: var(--ink);
+  background-color: var(--paper);
+  background-image: linear-gradient(var(--grid) 1px, transparent 1px),
+    linear-gradient(90deg, var(--grid) 1px, transparent 1px),
+    radial-gradient(
+      circle at 15% 15%,
+      rgba(255, 255, 255, 0.7),
+      transparent 55%
+    );
+  background-size: 28px 28px, 28px 28px, 100% 100%;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+a {
+  color: inherit;
+}
+
+.font-mono {
+  font-family: var(--font-mono);
+}
+
+.paper-card {
+  @apply rounded-3xl border border-black/5 bg-white/80 shadow-[0_20px_50px_-40px_rgba(15,118,110,0.35)];
+}
+
+.tech-pill {
+  @apply inline-flex items-center gap-1 rounded-full border border-black/10 bg-white px-3 py-1 text-[11px] uppercase tracking-[0.22em] text-[color:var(--ink-muted)];
+}
+
+.signal {
+  @apply inline-flex items-center gap-2 rounded-full border border-black/10 bg-white/70 px-3 py-1 text-[11px] uppercase tracking-[0.2em] text-[color:var(--ink-muted)];
+}
+
+.signal-dot {
+  height: 7px;
+  width: 7px;
+  border-radius: 999px;
+  background: var(--accent);
+  box-shadow: 0 0 0 6px var(--ring);
+}
+
+.link-arrow {
+  @apply inline-flex items-center gap-2 text-[13px] font-semibold uppercase tracking-[0.2em];
+}
+
+.post-content {
+  @apply text-[15px] leading-7 text-[color:var(--ink-muted)];
+}
+
+.post-content h2 {
+  @apply mt-10 text-2xl font-semibold text-[color:var(--ink)];
+}
+
+.post-content h3 {
+  @apply mt-8 text-xl font-semibold text-[color:var(--ink)];
+}
+
+.post-content p {
+  @apply mt-4;
+}
+
+.post-content a {
+  @apply underline decoration-black/20 underline-offset-4 transition hover:decoration-[color:var(--accent)];
+}
+
+.post-content ul,
+.post-content ol {
+  @apply mt-4 space-y-2 pl-5;
+}
+
+.post-content ul > li {
+  @apply list-disc;
+}
+
+.post-content ol > li {
+  @apply list-decimal;
+}
+
+.post-content table {
+  @apply mt-6 w-full border-collapse text-[13px];
+}
+
+.post-content th,
+.post-content td {
+  @apply border border-black/10 px-3 py-2 text-left;
+}
+
+.post-content th {
+  @apply bg-black/5 font-semibold text-[color:var(--ink)];
+}
+
+.post-content pre {
+  @apply mt-6 overflow-x-auto rounded-2xl bg-[#0e0f11] p-5 text-[13px] text-slate-100;
+}
+
+.post-content blockquote {
+  @apply mt-6 border-l-2 border-[color:var(--accent)] pl-4 italic text-[color:var(--ink-muted)];
+}
+
+.post-content code {
+  @apply rounded bg-black/5 px-2 py-0.5 text-[13px] text-[color:var(--ink)];
+}
+
+.post-content pre code {
+  @apply bg-transparent p-0 text-slate-100;
+}
