@@ -40,7 +40,7 @@
     "oxfmt": "latest",
     "oxlint": "latest",
     "typescript": "^5.7.2",
-    "vite": "8.0.0-beta.4",
+    "vite": "^7.3.1",
     "vitest": "^3.0.5",
     "web-vitals": "^5.1.0"
   },
@@ -48,6 +48,6 @@
     "eslint": "npm:oxlint@latest",
     "prettier": "npm:oxfmt@latest",
     "rollup": "npm:rolldown@latest",
-    "vite": "8.0.0-beta.4"
+    "vite": "^7.3.1"
   }
 }
