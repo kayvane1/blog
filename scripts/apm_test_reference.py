@@ -14,8 +14,6 @@ Requirements:
 import asyncio
 import os
 import random
-from pathlib import Path
-
 from modal import App, Image, Secret, concurrent, enter, exit, method
 
 # =============================================================================
@@ -157,48 +155,50 @@ class TestService:
         - Root span with span_type="serverless" and span.kind="server"
         - Child spans with appropriate types (template, llm)
         - Random latency simulation for observing outliers in APM
-        - Explicit tracer.flush() for real-time trace visibility
+        - Explicit tracer.flush() in finally block for guaranteed trace emission
         """
-        # Root span - the main operation (shows in trace list)
-        with tracer.trace("document.process", service=app_name, span_type="serverless") as root:
-            root.set_tag("document_id", document_id)
-            root.set_tag("strategy", strategy)
-            root.set_tag("span.kind", "server")  # Marks as entry point
-            logger.info("processing_document", document_id=document_id, strategy=strategy)
+        try:
+            # Root span - the main operation (shows in trace list)
+            with tracer.trace("document.process", service=app_name, span_type="serverless") as root:
+                root.set_tag("document_id", document_id)
+                root.set_tag("strategy", strategy)
+                root.set_tag("span.kind", "server")  # Marks as entry point
+                logger.info("processing_document", document_id=document_id, strategy=strategy)
 
-            # Child span 1 - PDF rendering (5% chance of 5x slower for anomaly detection demo)
-            with tracer.trace("document.render_pages", service=app_name, span_type="template") as render_span:
-                render_span.set_metric("pages_count", 10)
-                is_slow_render = random.random() < 0.05
-                render_time = 1.0 if is_slow_render else 0.2
-                render_span.set_tag("slow_render", is_slow_render)
-                await asyncio.sleep(render_time)
-                logger.info("rendered_pages", pages=10, slow=is_slow_render, duration_ms=int(render_time * 1000))
+                # Child span 1 - PDF rendering (5% chance of 5x slower for anomaly detection demo)
+                with tracer.trace("document.render_pages", service=app_name, span_type="template") as render_span:
+                    render_span.set_metric("pages_count", 10)
+                    is_slow_render = random.random() < 0.05
+                    render_time = 1.0 if is_slow_render else 0.2
+                    render_span.set_tag("slow_render", is_slow_render)
+                    await asyncio.sleep(render_time)
+                    logger.info("rendered_pages", pages=10, slow=is_slow_render, duration_ms=int(render_time * 1000))
 
-            # Child span 2 - LLM inference (10% chance of 3x slower for anomaly detection demo)
-            with tracer.trace("document.llm_extract", service=app_name, span_type="llm") as llm_span:
-                llm_span.set_tag("model", "mineru-vl")
-                llm_span.set_metric("tokens_processed", 1500)
-                is_slow_llm = random.random() < 0.10
-                llm_time = 0.9 if is_slow_llm else 0.3
-                llm_span.set_tag("slow_llm", is_slow_llm)
-                await asyncio.sleep(llm_time)
-                logger.info("extracted_content", tokens=1500, slow=is_slow_llm, duration_ms=int(llm_time * 1000))
+                # Child span 2 - LLM inference (10% chance of 3x slower for anomaly detection demo)
+                with tracer.trace("document.llm_extract", service=app_name, span_type="llm") as llm_span:
+                    llm_span.set_tag("model", "mineru-vl")
+                    llm_span.set_metric("tokens_processed", 1500)
+                    is_slow_llm = random.random() < 0.10
+                    llm_time = 0.9 if is_slow_llm else 0.3
+                    llm_span.set_tag("slow_llm", is_slow_llm)
+                    await asyncio.sleep(llm_time)
+                    logger.info("extracted_content", tokens=1500, slow=is_slow_llm, duration_ms=int(llm_time * 1000))
 
-            # Set final metrics on root span
-            root.set_metric("total_pages", 10)
-            logger.info("document_processed_successfully")
+                # Set final metrics on root span
+                root.set_metric("total_pages", 10)
+                logger.info("document_processed_successfully")
 
-        # CRITICAL: Flush traces immediately after each request
-        # Without this, traces buffer until container shutdown (which rarely happens with Modal's warm containers)
-        tracer.flush()
-
-        return {
-            "document_id": document_id,
-            "strategy": strategy,
-            "status": "success",
-            "pages": 10,
-        }
+            return {
+                "document_id": document_id,
+                "strategy": strategy,
+                "status": "success",
+                "pages": 10,
+            }
+        finally:
+            # CRITICAL: Flush traces in finally block - guarantees traces are sent even on
+            # early returns or exceptions. Without this, traces buffer until container
+            # shutdown (which rarely happens with Modal's warm containers).
+            tracer.flush()
 
     @exit()
     async def finish(self) -> None:

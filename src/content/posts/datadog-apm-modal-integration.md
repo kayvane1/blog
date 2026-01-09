@@ -3,17 +3,23 @@ title: Setting Up Datadog APM in Modal
 date: 2026-01-08
 summary: A practical walkthrough for wiring Datadog APM into Modal, with tracing pitfalls and sampling tradeoffs.
 tags: [observability, modal, datadog, python]
-github: https://github.com/your-handle/kayvane-blog
-script: https://github.com/your-handle/kayvane-blog/blob/main/scripts/apm_test_reference.py
+github: https://github.com/kayvane1/blog
+script: https://github.com/kayvane1/blog/blob/main/scripts/apm_test_reference.py
 ---
 
-**TL;DR**: Integrating Datadog APM with Modal's serverless platform requires careful configuration of the `datadog/serverless-init` container, proper environment variables, and understanding the trace sampling implications of Modal's concurrent input handling.
+**TL;DR**: Integrating Datadog APM with Modal's serverless platform is unfortunately as painful as it is on any other type of infrastructure type. While the initial setup wasn't that bad to get flowing as a modal function mirrors a lambda function by design, there were a few quirks to get things working nicely around setting proper environment variables, understanding the impact of concurrent inputs on trace sampling and how certain features like memory snapshots can break the Datadog agent.
 
 ---
 
 ## Introduction
 
-Modal is a powerful serverless platform for running Python workloads, but integrating observability tools like Datadog APM requires navigating some non-obvious configuration choices. This guide documents our journey setting up end-to-end tracing for a document processing service, including the gotchas we discovered and the tradeoffs to consider.
+Modal is a powerful serverless platform for running Python workloads, but integrating observability tools like Datadog APM requires navigating some non-obvious configuration choices. This guide documents how I set up end-to-end tracing for a document processing service, including the gotchas I discovered and the tradeoffs to consider.
+
+## Why Datadog APM?
+
+Modal has a native datadog log-forwarding integration, and for most services this is sufficient. However, for complex, distributed applications involving multiple Modal services, external APIs, and third-party systems, APM tracing allows you to have much deeper visibility into performance bottlenecks, error rates, and request flows.
+
+I was load testing my system with Locust and could see there were obvious bottlenecks, but tracking them down with logging alone felt like whack-a-mole. With APM traces, I could see the full request lifecycle, including downstream calls to LLM APIs and database queries.
 
 ## The Minimal Viable Setup
 
@@ -111,22 +117,30 @@ with image.imports():
     logger = structlog.get_logger(__name__)
 ```
 
-## Key Discovery #1: Serverless-Init is Required
+## Key Discovery #1: Serverless-Init + Auto-Instrumentation
 
-We initially tried several approaches:
+I initially tried several approaches:
 
 | Approach | Result |
 |----------|--------|
-| `ddtrace.auto` import | No traces appeared |
+| `ddtrace.auto` import alone | No traces appeared |
 | Agentless mode (`DD_TRACE_AGENT_URL`) | 404 errors, API version incompatibility |
 | `datadog/serverless-init` entrypoint | **Works** |
+| `serverless-init` + `ddtrace.auto` at import time | **Best approach** |
 
-The `serverless-init` container runs alongside your code and handles trace forwarding to Datadog's intake API. Without it, traces have nowhere to go.
+The `serverless-init` container runs alongside your code and handles trace forwarding to Datadog's intake API. Without it, traces have nowhere to go. Once `serverless-init` is the entrypoint, `ddtrace.auto` works if you enable it at image import time:
+
+```python
+with image.imports():
+    import ddtrace.auto  # Auto-instrumentation kicks in here
+```
 
 ```dockerfile
 COPY --from=datadog/serverless-init /datadog-init /app/datadog-init
 ENTRYPOINT ["/app/datadog-init"]
 ```
+
+**Important - Modal Secret Naming**: Your Modal secret must contain `DD_API_KEY` (not `DATADOG_API_KEY` or other variations). The `serverless-init` agent looks for this specific environment variable to authenticate with Datadog's intake API. A common gotcha is creating a secret with the wrong key name and wondering why traces never appear.
 
 **Note**: You may see warnings like `Workloadmeta collectors are not ready after 20 retries` - these are non-fatal and traces still work.
 
@@ -148,28 +162,42 @@ Without this, logs are captured but won't correlate with traces in the UI.
 
 ## Key Discovery #3: Explicit `tracer.flush()` for Real-Time Traces
 
-Modal containers stay warm between invocations. The `@exit()` lifecycle hook (where we call `tracer.shutdown()`) only runs on container shutdown, not after each request.
+Modal containers stay warm between invocations. The `@exit()` lifecycle hook (where I call `tracer.shutdown()`) only runs on container shutdown, not after each request.
 
 **Problem**: Traces buffer in memory and only appear in Datadog when the container eventually shuts down.
 
-**Solution**: Call `tracer.flush()` after each request:
+**Solution**: Call `tracer.flush()` after each request, but guard it with `finally` so early returns and exceptions still emit spans:
 
 ```python
 @method()
 async def process(self, document_id: str) -> dict:
-    with tracer.trace("document.process", service=app_name) as span:
-        span.set_tag("document_id", document_id)
-        # ... processing logic ...
+    try:
+        with tracer.trace("document.process", service=app_name) as span:
+            span.set_tag("document_id", document_id)
 
-    # Flush traces immediately - don't wait for container shutdown
-    tracer.flush()
+            if not document_id:
+                return {"error": "missing_id"}  # Early return - still gets flushed
 
-    return result
+            result = await self._do_work(document_id)
+            return result
+    finally:
+        # Always flush - covers early returns, exceptions, and normal completion
+        tracer.flush()
 ```
+
+**Shutdown pattern**: Combine per-request flushing with `@exit()` shutdown to drain any remaining buffers:
+
+```python
+@exit()
+async def cleanup(self) -> None:
+    tracer.shutdown()  # Drains remaining spans and closes connections
+```
+
+This two-layer approach ensures spans are sent in real-time during normal operation, while `shutdown()` in `@exit()` acts as a safety net for any buffered data when the container eventually terminates.
 
 ## Key Discovery #4: Memory Snapshots Break the Datadog Agent
 
-Modal's `enable_memory_snapshot=True` can break Datadog's `serverless-init` agent after a snapshot/restore cycle. We saw spans created locally (trace IDs in logs) but nothing showed up in APM because the agent was no longer reachable.
+Modal's `enable_memory_snapshot=True` can break Datadog's `serverless-init` agent after a snapshot/restore cycle. I saw spans created locally (trace IDs in logs) but nothing showed up in APM because the agent was no longer reachable.
 
 **Symptoms:**
 - Log lines show `dd.trace_id` / `dd.span_id`, but no traces appear in APM
@@ -193,7 +221,7 @@ If you must use snapshots, consider agentless tracing or a separate agent that s
 
 ## Key Discovery #5: Concurrent Inputs Impact Trace Sampling
 
-This was our biggest "aha" moment. The Datadog agent samples approximately **10 traces per second** by default. With Modal's `@concurrent(max_inputs=128)`, we were completing 50+ requests in under 3 seconds - overwhelming the sampler.
+This was my biggest "aha" moment. The Datadog agent samples approximately **10 traces per second** by default. With Modal's `@concurrent(max_inputs=128)`, I was completing 50+ requests in under 3 seconds - overwhelming the sampler.
 
 **Symptoms:**
 - Only 2-5 traces appear from 50 requests
@@ -240,7 +268,7 @@ with tracer.trace("document.process", service=app_name, span_type="serverless") 
         ...
 ```
 
-**Available span types**: `web`, `db`, `cache`, `worker`, `http`, `template`, `serverless`, `llm`
+**Available span types**: `web`, `db`, `cache`, `worker`, `http`
 
 ## Key Discovery #7: Structlog with Modal Context
 
