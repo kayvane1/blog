@@ -71,6 +71,41 @@ a {
   @apply text-[15px] leading-7 text-[color:var(--ink-muted)];
 }
 
+.post-content .tldr {
+  position: relative;
+  margin-top: 1.5rem;
+  border: 1px solid rgba(15, 118, 110, 0.18);
+  border-left: 4px solid var(--accent);
+  border-radius: 1.25rem;
+  background: linear-gradient(
+    120deg,
+    rgba(15, 118, 110, 0.08),
+    rgba(255, 255, 255, 0.9) 65%
+  );
+  padding: 1.1rem 1.4rem;
+  color: var(--ink);
+  box-shadow: 0 20px 45px -35px rgba(15, 118, 110, 0.45);
+}
+
+.post-content .tldr p {
+  margin: 0;
+}
+
+.post-content .tldr-label {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  border: 1px solid rgba(15, 118, 110, 0.28);
+  background: rgba(15, 118, 110, 0.1);
+  padding: 0.15rem 0.6rem;
+  margin-right: 0.6rem;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
 .post-content h2 {
   @apply mt-10 text-2xl font-semibold text-[color:var(--ink)];
 }

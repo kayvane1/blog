@@ -198,6 +198,7 @@ function PostCard({ post }: { post: PostMeta }) {
       aria-label={`Read ${post.title}`}
       onClick={goToPost}
       onKeyDown={(event) => {
+        if (event.currentTarget !== event.target) return
         if (event.key === 'Enter' || event.key === ' ') {
           event.preventDefault()
           goToPost()

@@ -46,7 +46,7 @@ function toPost(path: string, raw: string): Post {
   const wordCount = countWords(content)
   const readingTime =
     stringValue(data.readingTime) ?? `${estimateReadingTime(wordCount)} min`
-  const html = marked.parse(content) as string
+  const html = stylizeTldr(marked.parse(content) as string)
 
   return {
     slug,
@@ -92,6 +92,17 @@ function parseFrontmatter(raw: string): { data: Frontmatter; content: string } {
   }
 
   return { data, content }
+}
+
+function stylizeTldr(html: string): string {
+  return html.replace(
+    /<p><strong>TL;DR<\/strong>:\s*([\s\S]*?)<\/p>/i,
+    (_match, body) => {
+      const text = String(body).trim()
+      const spacer = text ? ' ' : ''
+      return `<aside class="tldr"><p><span class="tldr-label">TL;DR</span>${spacer}${text}</p></aside>`
+    }
+  )
 }
 
 function stripQuotes(value: string) {

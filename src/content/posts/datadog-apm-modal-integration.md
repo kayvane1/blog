@@ -21,6 +21,26 @@ Modal has a native datadog log-forwarding integration, and for most services thi
 
 I was load testing my system with Locust and could see there were obvious bottlenecks, but tracking them down with logging alone felt like whack-a-mole. With APM traces, I could see the full request lifecycle, including downstream calls to LLM APIs and database queries.
 
+## Understanding Datadog's Sampling Pipeline
+
+Before diving into the setup, it's worth understanding how Datadog's sampling works. A common misconception is that setting `DD_TRACE_SAMPLE_RATE=1.0` means you'll be billed for every trace. In reality, Datadog applies sampling at multiple stages:
+
+![Datadog sampling pipeline showing traces flowing through application, agent, ingestion, and retention stages](https://cdn.utf9k.net/blog/sampling-all-the-way-down/apps.jpg)
+
+*Image credit: [utf9k.net](https://utf9k.net/blog/sampling-all-the-way-down/)*
+
+**The sampling stages:**
+
+1. **Application level** (`DD_TRACE_SAMPLE_RATE`): Controls what percentage of traces your app sends to the agent. Datadog recommends 100% here since you're only charged for retained traces.
+
+2. **Agent level**: The Datadog agent applies its own sampling (~10 traces/sec by default). This becomes important when using Modal's concurrent input handling (see Key Discovery #5).
+
+3. **Ingestion**: All traces are available in "Live Traces" for 15 minutes regardless of sampling decisions. During this window, you can search and inspect any trace.
+
+4. **Retention filters**: After 15 minutes, only traces matching your retention filters are indexed and stored. This is where billing kicks in.
+
+**The key insight**: You can safely set `DD_TRACE_SAMPLE_RATE=1.0` to capture everything at the application level. The ingestion sampling rules are applied separately, and you're only billed for traces that are retained beyond the 15-minute window. This means you get full visibility in Live Traces without necessarily paying for long-term storage of every single trace.
+
 ## The Minimal Viable Setup
 
 Here's the complete working configuration:
@@ -480,31 +500,11 @@ class DocumentProcessor:
 
 1. **Concurrency vs Observability**: Higher `max_inputs` = faster throughput but traces may be sampled out. Lower values give better visibility but slower processing.
 
-2. **Sample Rate**: `DD_TRACE_SAMPLE_RATE=1.0` captures everything at the application level, but this doesn't directly increase Datadog costs (see "Understanding Datadog's Sampling Pipeline" below).
+2. **Sample Rate**: `DD_TRACE_SAMPLE_RATE=1.0` captures everything at the application level, but this doesn't directly increase Datadog costs (see "Understanding Datadog's Sampling Pipeline" above).
 
 3. **Flush Frequency**: Calling `tracer.flush()` after every request adds latency (~1-5ms) but ensures real-time visibility. For batch processing, flush periodically instead.
 
 4. **Container Lifecycle**: Modal keeps containers warm, so `@exit()` rarely runs. Don't rely on it for trace flushing - use explicit `tracer.flush()`.
-
-## Understanding Datadog's Sampling Pipeline
-
-A common misconception is that setting `DD_TRACE_SAMPLE_RATE=1.0` means you'll be billed for every trace. In reality, Datadog applies sampling at multiple stages:
-
-![Datadog sampling pipeline showing traces flowing through application, agent, ingestion, and retention stages](https://cdn.utf9k.net/blog/sampling-all-the-way-down/apps.jpg)
-
-*Image credit: [utf9k.net](https://utf9k.net/blog/sampling-all-the-way-down/)*
-
-**The sampling stages:**
-
-1. **Application level** (`DD_TRACE_SAMPLE_RATE`): Controls what percentage of traces your app sends to the agent. Datadog recommends 100% here since you're only charged for retained traces.
-
-2. **Agent level**: The Datadog agent applies its own sampling (~10 traces/sec by default), which is what I discussed in Key Discovery #5.
-
-3. **Ingestion**: All traces are available in "Live Traces" for 15 minutes regardless of sampling decisions. During this window, you can search and inspect any trace.
-
-4. **Retention filters**: After 15 minutes, only traces matching your retention filters are indexed and stored. This is where billing kicks in.
-
-**The key insight**: You can safely set `DD_TRACE_SAMPLE_RATE=1.0` to capture everything at the application level. The ingestion sampling rules are applied separately, and you're only billed for traces that are retained beyond the 15-minute window. This means you get full visibility in Live Traces without necessarily paying for long-term storage of every single trace.
 
 ## Further Reading
 
