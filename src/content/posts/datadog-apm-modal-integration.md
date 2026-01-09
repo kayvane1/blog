@@ -155,10 +155,13 @@ DD_TAGS = f"env:{DD_ENV},service:{DD_SERVICE}"
 Without this, logs are captured but won't correlate with traces in the UI.
 
 **Required environment variables for correlation:**
+
 - `DD_SERVICE` - Service name
 - `DD_ENV` - Environment (dev, staging, prod)
 - `DD_TAGS` - Must include `env:` and `service:`
 - `DD_LOGS_INJECTION` - Set to `true`
+
+For the official documentation on connecting logs and traces in Python, see [Datadog's Connect Logs and Traces guide](https://docs.datadoghq.com/tracing/other_telemetry/connect_logs_and_traces/python/).
 
 ## Key Discovery #3: Explicit `tracer.flush()` for Real-Time Traces
 
@@ -477,11 +480,36 @@ class DocumentProcessor:
 
 1. **Concurrency vs Observability**: Higher `max_inputs` = faster throughput but traces may be sampled out. Lower values give better visibility but slower processing.
 
-2. **Sample Rate**: `DD_TRACE_SAMPLE_RATE=1.0` captures everything but increases Datadog costs. For high-volume services, consider sampling.
+2. **Sample Rate**: `DD_TRACE_SAMPLE_RATE=1.0` captures everything at the application level, but this doesn't directly increase Datadog costs (see "Understanding Datadog's Sampling Pipeline" below).
 
 3. **Flush Frequency**: Calling `tracer.flush()` after every request adds latency (~1-5ms) but ensures real-time visibility. For batch processing, flush periodically instead.
 
 4. **Container Lifecycle**: Modal keeps containers warm, so `@exit()` rarely runs. Don't rely on it for trace flushing - use explicit `tracer.flush()`.
+
+## Understanding Datadog's Sampling Pipeline
+
+A common misconception is that setting `DD_TRACE_SAMPLE_RATE=1.0` means you'll be billed for every trace. In reality, Datadog applies sampling at multiple stages:
+
+![Datadog sampling pipeline showing traces flowing through application, agent, ingestion, and retention stages](https://cdn.utf9k.net/blog/sampling-all-the-way-down/apps.jpg)
+
+*Image credit: [utf9k.net](https://utf9k.net/blog/sampling-all-the-way-down/)*
+
+**The sampling stages:**
+
+1. **Application level** (`DD_TRACE_SAMPLE_RATE`): Controls what percentage of traces your app sends to the agent. Datadog recommends 100% here since you're only charged for retained traces.
+
+2. **Agent level**: The Datadog agent applies its own sampling (~10 traces/sec by default), which is what I discussed in Key Discovery #5.
+
+3. **Ingestion**: All traces are available in "Live Traces" for 15 minutes regardless of sampling decisions. During this window, you can search and inspect any trace.
+
+4. **Retention filters**: After 15 minutes, only traces matching your retention filters are indexed and stored. This is where billing kicks in.
+
+**The key insight**: You can safely set `DD_TRACE_SAMPLE_RATE=1.0` to capture everything at the application level. The ingestion sampling rules are applied separately, and you're only billed for traces that are retained beyond the 15-minute window. This means you get full visibility in Live Traces without necessarily paying for long-term storage of every single trace.
+
+## Further Reading
+
+- [Sampling all the way down](https://utf9k.net/blog/sampling-all-the-way-down/) by Marcus Crane - An excellent deep dive into Datadog's multi-stage sampling pipeline
+- [Connect Logs and Traces in Python](https://docs.datadoghq.com/tracing/other_telemetry/connect_logs_and_traces/python/) - Official Datadog documentation on log-trace correlation
 
 ---
 
