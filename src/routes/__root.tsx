@@ -29,6 +29,11 @@ export const Route = createRootRoute({
     ],
     links: [
       {
+        rel: 'icon',
+        href: '/icon.ico',
+        type: 'image/x-icon',
+      },
+      {
         rel: 'preconnect',
         href: 'https://fonts.googleapis.com',
       },
