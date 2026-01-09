@@ -220,11 +220,11 @@ class MyService:
     ...
 ```
 
-If you must use snapshots, consider agentless tracing or a separate agent that survives restores.
+If you must use snapshots, consider agentless tracing or a separate agent that survives restores. See Modal's [Memory Snapshot documentation](https://modal.com/docs/guide/memory-snapshot) for more details on how snapshots work.
 
 ## Key Discovery #5: Concurrent Inputs Impact Trace Sampling
 
-This was my biggest "aha" moment. The Datadog agent samples approximately **10 traces per second** by default. With Modal's `@concurrent(max_inputs=128)`, I was completing 50+ requests in under 3 seconds - overwhelming the sampler.
+This was my biggest "aha" moment. The Datadog agent samples approximately **10 traces per second** by default. With Modal's [`@concurrent` decorator](https://modal.com/docs/guide/concurrent-inputs) set to `max_inputs=128`, I was completing 50+ requests in under 3 seconds - overwhelming the sampler.
 
 **Symptoms:**
 - Only 2-5 traces appear from 50 requests
@@ -510,6 +510,8 @@ A common misconception is that setting `DD_TRACE_SAMPLE_RATE=1.0` means you'll b
 
 - [Sampling all the way down](https://utf9k.net/blog/sampling-all-the-way-down/) by Marcus Crane - An excellent deep dive into Datadog's multi-stage sampling pipeline
 - [Connect Logs and Traces in Python](https://docs.datadoghq.com/tracing/other_telemetry/connect_logs_and_traces/python/) - Official Datadog documentation on log-trace correlation
+- [Modal Concurrent Inputs](https://modal.com/docs/guide/concurrent-inputs) - How to handle multiple inputs concurrently in Modal
+- [Modal Memory Snapshots](https://modal.com/docs/guide/memory-snapshot) - Reduce cold start times with container snapshots
 
 ---
 

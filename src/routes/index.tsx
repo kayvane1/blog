@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { createFileRoute, Link } from '@tanstack/react-router'
+import { createFileRoute, Link, useNavigate } from '@tanstack/react-router'
 import { motion, MotionConfig } from 'framer-motion'
 import { ArrowUpRight, Github, Linkedin, Mail, Search, X } from 'lucide-react'
 
@@ -182,12 +182,28 @@ function Home() {
 }
 
 function PostCard({ post }: { post: PostMeta }) {
+  const navigate = useNavigate()
+
+  const goToPost = () => {
+    navigate({ to: '/posts/$slug', params: { slug: post.slug } })
+  }
+
   return (
     <motion.article
       variants={itemVariants}
       whileHover={{ y: -6 }}
       whileTap={{ scale: 0.99 }}
-      className="group relative flex h-full flex-col overflow-hidden rounded-3xl border border-black/5 bg-white/80 p-6 shadow-[0_18px_50px_-40px_rgba(15,118,110,0.4)] transition"
+      role="link"
+      tabIndex={0}
+      aria-label={`Read ${post.title}`}
+      onClick={goToPost}
+      onKeyDown={(event) => {
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault()
+          goToPost()
+        }
+      }}
+      className="group relative flex h-full cursor-pointer flex-col overflow-hidden rounded-3xl border border-black/5 bg-white/80 p-6 shadow-[0_18px_50px_-40px_rgba(15,118,110,0.4)] transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--ring)]"
     >
       <div className="absolute inset-0 bg-gradient-to-br from-white via-white to-emerald-50/70 opacity-0 transition duration-300 group-hover:opacity-100" />
       <div className="relative flex h-full flex-col gap-5">
@@ -215,6 +231,7 @@ function PostCard({ post }: { post: PostMeta }) {
             className="link-arrow text-[color:var(--ink)]"
             to="/posts/$slug"
             params={{ slug: post.slug }}
+            onClick={(event) => event.stopPropagation()}
           >
             read
             <ArrowUpRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
@@ -226,6 +243,7 @@ function PostCard({ post }: { post: PostMeta }) {
                 href={post.github}
                 target="_blank"
                 rel="noreferrer"
+                onClick={(event) => event.stopPropagation()}
               >
                 github
               </a>
@@ -236,6 +254,7 @@ function PostCard({ post }: { post: PostMeta }) {
                 href={post.script}
                 target="_blank"
                 rel="noreferrer"
+                onClick={(event) => event.stopPropagation()}
               >
                 script
               </a>
