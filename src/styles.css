@@ -10,8 +10,9 @@
   --grid: rgba(20, 20, 19, 0.08);
   --ring: rgba(15, 118, 110, 0.18);
   --font-sans: "Space Grotesk", "Helvetica Neue", Arial, sans-serif;
-  --font-mono: "IBM Plex Mono", "SFMono-Regular", Menlo, Monaco, Consolas,
-    "Liberation Mono", "Courier New", monospace;
+  --font-mono:
+    "IBM Plex Mono", "SFMono-Regular", Menlo, Monaco, Consolas, "Liberation Mono", "Courier New",
+    monospace;
 }
 
 * {
@@ -23,14 +24,14 @@ body {
   font-family: var(--font-sans);
   color: var(--ink);
   background-color: var(--paper);
-  background-image: linear-gradient(var(--grid) 1px, transparent 1px),
+  background-image:
+    linear-gradient(var(--grid) 1px, transparent 1px),
     linear-gradient(90deg, var(--grid) 1px, transparent 1px),
-    radial-gradient(
-      circle at 15% 15%,
-      rgba(255, 255, 255, 0.7),
-      transparent 55%
-    );
-  background-size: 28px 28px, 28px 28px, 100% 100%;
+    radial-gradient(circle at 15% 15%, rgba(255, 255, 255, 0.7), transparent 55%);
+  background-size:
+    28px 28px,
+    28px 28px,
+    100% 100%;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }

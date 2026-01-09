@@ -1,7 +1,6 @@
 {
   "name": "kayvane-blog",
   "private": true,
-  "packageManager": "bun@1.3.4",
   "type": "module",
   "scripts": {
     "dev": "vite dev --port 3000",
@@ -20,10 +19,10 @@
     "@tanstack/react-router-ssr-query": "1.146.0",
     "@tanstack/react-start": "1.146.0",
     "@tanstack/router-plugin": "1.146.0",
+    "framer-motion": "^12.23.6",
     "lucide-react": "^0.561.0",
     "marked": "^15.0.6",
     "nitro": "latest",
-    "framer-motion": "^12.23.6",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
     "tailwindcss": "^4.0.6",
@@ -51,5 +50,6 @@
     "prettier": "npm:oxfmt@latest",
     "rollup": "npm:rolldown@latest",
     "vite": "^7.3.1"
-  }
+  },
+  "packageManager": "bun@1.3.4"
 }

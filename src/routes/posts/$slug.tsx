@@ -1,13 +1,13 @@
-import { Link, createFileRoute, notFound } from '@tanstack/react-router'
-import { ArrowLeft, ArrowUpRight } from 'lucide-react'
+import { Link, createFileRoute, notFound } from "@tanstack/react-router";
+import { ArrowLeft, ArrowUpRight } from "lucide-react";
 
-import { getPostBySlug } from '../../lib/posts'
+import { getPostBySlug } from "../../lib/posts";
 
-export const Route = createFileRoute('/posts/$slug')({
+export const Route = createFileRoute("/posts/$slug")({
   loader: ({ params }) => {
-    const post = getPostBySlug(params.slug)
-    if (!post) throw notFound()
-    return post
+    const post = getPostBySlug(params.slug);
+    if (!post) throw notFound();
+    return post;
   },
   head: ({ loaderData }) => ({
     meta: [
@@ -15,16 +15,16 @@ export const Route = createFileRoute('/posts/$slug')({
         title: `${loaderData.title} | Kayvane`,
       },
       {
-        name: 'description',
+        name: "description",
         content: loaderData.summary,
       },
     ],
   }),
   component: PostPage,
-})
+});
 
 function PostPage() {
-  const post = Route.useLoaderData()
+  const post = Route.useLoaderData();
 
   return (
     <main className="min-h-screen px-6 pb-20 pt-12">
@@ -44,9 +44,7 @@ function PostPage() {
             <h1 className="mt-4 text-3xl font-semibold text-[color:var(--ink)] md:text-4xl">
               {post.title}
             </h1>
-            <p className="mt-3 text-base text-[color:var(--ink-muted)]">
-              {post.summary}
-            </p>
+            <p className="mt-3 text-base text-[color:var(--ink-muted)]">{post.summary}</p>
             <div className="mt-5 flex flex-wrap gap-2">
               {post.tags.map((tag) => (
                 <span key={tag} className="tech-pill">
@@ -81,25 +79,22 @@ function PostPage() {
               </div>
             )}
             <div className="mt-10 border-t border-black/5 pt-8">
-              <div
-                className="post-content"
-                dangerouslySetInnerHTML={{ __html: post.html }}
-              />
+              <div className="post-content" dangerouslySetInnerHTML={{ __html: post.html }} />
             </div>
           </div>
         </article>
       </div>
     </main>
-  )
+  );
 }
 
 function formatDate(value: string): string {
-  if (!value) return 'draft'
-  const date = new Date(value)
-  if (Number.isNaN(date.getTime())) return value
-  return new Intl.DateTimeFormat('en-US', {
-    month: 'short',
-    day: '2-digit',
-    year: 'numeric',
-  }).format(date)
+  if (!value) return "draft";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return value;
+  return new Intl.DateTimeFormat("en-US", {
+    month: "short",
+    day: "2-digit",
+    year: "numeric",
+  }).format(date);
 }

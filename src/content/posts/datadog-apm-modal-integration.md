@@ -27,7 +27,7 @@ Before diving into the setup, it's worth understanding how Datadog's sampling wo
 
 ![Datadog sampling pipeline showing traces flowing through application, agent, ingestion, and retention stages](https://cdn.utf9k.net/blog/sampling-all-the-way-down/apps.jpg)
 
-*Image credit: [utf9k.net](https://utf9k.net/blog/sampling-all-the-way-down/)*
+_Image credit: [utf9k.net](https://utf9k.net/blog/sampling-all-the-way-down/)_
 
 **The sampling stages:**
 
@@ -141,12 +141,12 @@ with image.imports():
 
 I initially tried several approaches:
 
-| Approach | Result |
-|----------|--------|
-| `ddtrace.auto` import alone | No traces appeared |
-| Agentless mode (`DD_TRACE_AGENT_URL`) | 404 errors, API version incompatibility |
-| `datadog/serverless-init` entrypoint | **Works** |
-| `serverless-init` + `ddtrace.auto` at import time | **Best approach** |
+| Approach                                          | Result                                  |
+| ------------------------------------------------- | --------------------------------------- |
+| `ddtrace.auto` import alone                       | No traces appeared                      |
+| Agentless mode (`DD_TRACE_AGENT_URL`)             | 404 errors, API version incompatibility |
+| `datadog/serverless-init` entrypoint              | **Works**                               |
+| `serverless-init` + `ddtrace.auto` at import time | **Best approach**                       |
 
 The `serverless-init` container runs alongside your code and handles trace forwarding to Datadog's intake API. Without it, traces have nowhere to go. Once `serverless-init` is the entrypoint, `ddtrace.auto` works if you enable it at image import time:
 
@@ -223,6 +223,7 @@ This two-layer approach ensures spans are sent in real-time during normal operat
 Modal's `enable_memory_snapshot=True` can break Datadog's `serverless-init` agent after a snapshot/restore cycle. I saw spans created locally (trace IDs in logs) but nothing showed up in APM because the agent was no longer reachable.
 
 **Symptoms:**
+
 - Log lines show `dd.trace_id` / `dd.span_id`, but no traces appear in APM
 - ddtrace logs: `failed to send, dropping 1 traces to intake at http://localhost:8126/v0.5/traces: timed out`
 - `SERVERLESS_INIT` warnings right after restore
@@ -247,6 +248,7 @@ If you must use snapshots, consider agentless tracing or a separate agent that s
 This was my biggest "aha" moment. The Datadog agent samples approximately **10 traces per second** by default. With Modal's [`@concurrent` decorator](https://modal.com/docs/guide/concurrent-inputs) set to `max_inputs=128`, I was completing 50+ requests in under 3 seconds - overwhelming the sampler.
 
 **Symptoms:**
+
 - Only 2-5 traces appear from 50 requests
 - Traces appear in "Live Traces" but not indexed
 - Inconsistent trace visibility
@@ -256,6 +258,7 @@ This was my biggest "aha" moment. The Datadog agent samples approximately **10 t
 **Solutions:**
 
 1. **Reduce concurrency** for better sampling visibility:
+
 ```python
 @app.cls(secrets=[Secret.from_name("datadog_api_key")])
 @concurrent(max_inputs=8)  # Reduced from 128
@@ -264,11 +267,13 @@ class MyService:
 ```
 
 2. **Set explicit sample rate** (overrides agent sampling):
+
 ```python
 "DD_TRACE_SAMPLE_RATE": "1.0"  # Capture 100% of traces
 ```
 
 **Tradeoff**: Lower concurrency means slower throughput but better observability. For production, consider:
+
 - Using `DD_TRACE_SAMPLE_RATE=1.0` for critical services
 - Accepting sampling for high-throughput services
 - Using metrics (not traces) for aggregate performance data
@@ -340,6 +345,7 @@ This gives you logs like:
 ```
 
 **Benefits:**
+
 - Filter logs by Modal region, task, or environment
 - Correlate logs with specific container instances
 - Debug issues across distributed traces
@@ -484,17 +490,17 @@ class DocumentProcessor:
 
 ## Summary: Configuration Checklist
 
-| Setting | Value | Purpose |
-|---------|-------|---------|
-| `serverless-init` | Entrypoint | Trace forwarding |
-| `ddtrace` version | `4.1.2` | Tested with Modal |
-| `DD_TRACE_ENABLED` | `true` | Enable tracing |
-| `DD_LOGS_INJECTION` | `true` | Inject trace IDs into logs |
-| `DD_TAGS` | `env:X,service:Y` | Log-APM correlation |
-| `DD_TRACE_SAMPLE_RATE` | `1.0` | Override agent sampling |
-| `@concurrent(max_inputs=N)` | `8-16` | Balance throughput vs sampling |
-| `tracer.flush()` | After each request | Real-time trace visibility |
-| `patch(logging=True)` | At import time | Enable log correlation |
+| Setting                     | Value              | Purpose                        |
+| --------------------------- | ------------------ | ------------------------------ |
+| `serverless-init`           | Entrypoint         | Trace forwarding               |
+| `ddtrace` version           | `4.1.2`            | Tested with Modal              |
+| `DD_TRACE_ENABLED`          | `true`             | Enable tracing                 |
+| `DD_LOGS_INJECTION`         | `true`             | Inject trace IDs into logs     |
+| `DD_TAGS`                   | `env:X,service:Y`  | Log-APM correlation            |
+| `DD_TRACE_SAMPLE_RATE`      | `1.0`              | Override agent sampling        |
+| `@concurrent(max_inputs=N)` | `8-16`             | Balance throughput vs sampling |
+| `tracer.flush()`            | After each request | Real-time trace visibility     |
+| `patch(logging=True)`       | At import time     | Enable log correlation         |
 
 ## Tradeoffs to Consider
 
@@ -515,4 +521,4 @@ class DocumentProcessor:
 
 ---
 
-*This guide is based on hands-on integration work with Modal and Datadog APM. The patterns described here have been tested with ddtrace 4.1.2, Modal's serverless platform, and Datadog's APM service as of January 2026.*
+_This guide is based on hands-on integration work with Modal and Datadog APM. The patterns described here have been tested with ddtrace 4.1.2, Modal's serverless platform, and Datadog's APM service as of January 2026._
