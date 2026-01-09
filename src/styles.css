@@ -73,37 +73,50 @@ a {
 
 .post-content .tldr {
   position: relative;
-  margin-top: 1.5rem;
-  border: 1px solid rgba(15, 118, 110, 0.18);
-  border-left: 4px solid var(--accent);
-  border-radius: 1.25rem;
-  background: linear-gradient(
-    120deg,
-    rgba(15, 118, 110, 0.08),
-    rgba(255, 255, 255, 0.9) 65%
-  );
+  margin: 1.6rem 0;
+  border-radius: 1.5rem;
+  border: 1px solid rgba(20, 20, 19, 0.08);
+  background: var(--paper-bright);
   padding: 1.1rem 1.4rem;
-  color: var(--ink);
-  box-shadow: 0 20px 45px -35px rgba(15, 118, 110, 0.45);
+  box-shadow: 0 18px 45px -35px rgba(20, 20, 19, 0.35);
 }
 
 .post-content .tldr p {
   margin: 0;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0.8rem;
+  align-items: start;
 }
 
 .post-content .tldr-label {
   display: inline-flex;
   align-items: center;
   border-radius: 999px;
-  border: 1px solid rgba(15, 118, 110, 0.28);
-  background: rgba(15, 118, 110, 0.1);
-  padding: 0.15rem 0.6rem;
-  margin-right: 0.6rem;
+  border: 1px solid rgba(20, 20, 19, 0.12);
+  background: rgba(20, 20, 19, 0.06);
+  padding: 0.2rem 0.65rem;
   font-family: var(--font-mono);
   font-size: 11px;
   letter-spacing: 0.22em;
   text-transform: uppercase;
-  color: var(--accent);
+  color: var(--ink);
+}
+
+.post-content .tldr + hr {
+  display: none;
+}
+
+.post-content hr {
+  margin: 1.75rem 0;
+  border: none;
+  border-top: 1px solid rgba(20, 20, 19, 0.08);
+}
+
+@media (max-width: 640px) {
+  .post-content .tldr p {
+    grid-template-columns: 1fr;
+  }
 }
 
 .post-content h2 {
