@@ -3,6 +3,7 @@ import { ArrowLeft, ArrowUpRight } from "lucide-react";
 
 import { TagPill } from "../../components/TagPill";
 import { getPostBySlug } from "../../lib/posts";
+import { SITE, absoluteUrl } from "../../lib/site";
 
 export const Route = createFileRoute("/posts/$slug")({
   loader: ({ params }) => {
@@ -10,17 +11,67 @@ export const Route = createFileRoute("/posts/$slug")({
     if (!post) throw notFound();
     return post;
   },
-  head: ({ loaderData }) => ({
-    meta: [
-      {
-        title: `${loaderData.title} | Kayvane`,
+  head: ({ loaderData }) => {
+    const title = `${loaderData.title} | ${SITE.name}`;
+    const description = loaderData.summary;
+    const canonical = absoluteUrl(`/posts/${loaderData.slug}`);
+    const publishedAt = toIsoDate(loaderData.date);
+    const keywords = loaderData.tags.length ? loaderData.tags : undefined;
+    const timeRequired = readingTimeToIso(loaderData.readingTime);
+    const personId = `${SITE.url}/#person`;
+    const websiteId = `${SITE.url}/#website`;
+    const jsonLd = {
+      "@context": "https://schema.org",
+      "@type": "BlogPosting",
+      "@id": `${canonical}#article`,
+      headline: loaderData.title,
+      description,
+      datePublished: publishedAt,
+      dateModified: publishedAt,
+      author: {
+        "@id": personId,
+        name: SITE.name,
       },
-      {
-        name: "description",
-        content: loaderData.summary,
+      publisher: {
+        "@id": personId,
       },
-    ],
-  }),
+      mainEntityOfPage: {
+        "@type": "WebPage",
+        "@id": canonical,
+      },
+      url: canonical,
+      keywords,
+      wordCount: loaderData.wordCount,
+      inLanguage: SITE.language,
+      isPartOf: {
+        "@id": websiteId,
+      },
+      timeRequired,
+    };
+
+    const meta = [
+      { title },
+      { name: "description", content: description },
+      { property: "og:title", content: title },
+      { property: "og:description", content: description },
+      { property: "og:url", content: canonical },
+      { property: "og:type", content: "article" },
+      publishedAt ? { property: "article:published_time", content: publishedAt } : undefined,
+      { name: "twitter:title", content: title },
+      { name: "twitter:description", content: description },
+    ].filter(Boolean);
+
+    return {
+      meta,
+      links: [{ rel: "canonical", href: canonical }],
+      headScripts: [
+        {
+          type: "application/ld+json",
+          children: JSON.stringify(jsonLd),
+        },
+      ],
+    };
+  },
   component: PostPage,
 });
 
@@ -78,4 +129,18 @@ function formatDate(value: string): string {
     day: "2-digit",
     year: "numeric",
   }).format(date);
+}
+
+function toIsoDate(value: string): string | undefined {
+  if (!value) return undefined;
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return undefined;
+  return date.toISOString();
+}
+
+function readingTimeToIso(value: string): string | undefined {
+  if (!value) return undefined;
+  const match = value.match(/\d+/);
+  if (!match) return undefined;
+  return `PT${match[0]}M`;
 }

@@ -2,6 +2,7 @@ import { HeadContent, Scripts, createRootRoute } from "@tanstack/react-router";
 import { TanStackRouterDevtoolsPanel } from "@tanstack/react-router-devtools";
 import { TanStackDevtools } from "@tanstack/react-devtools";
 
+import { SITE } from "../lib/site";
 import appCss from "../styles.css?url";
 
 export const Route = createRootRoute({
@@ -19,11 +20,19 @@ export const Route = createRootRoute({
       },
       {
         name: "description",
-        content: "Personal notes on machine learning, systems, and new technologies.",
+        content: SITE.description,
       },
       {
         name: "theme-color",
         content: "#f6f3ec",
+      },
+      {
+        property: "og:site_name",
+        content: SITE.name,
+      },
+      {
+        name: "twitter:card",
+        content: "summary",
       },
     ],
     links: [

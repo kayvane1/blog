@@ -5,10 +5,64 @@ import { ArrowUpRight, Github, Linkedin, Mail, Search, X } from "lucide-react";
 
 import { TagPill } from "../components/TagPill";
 import { getAllPosts, type PostMeta } from "../lib/posts";
-import { SITE } from "../lib/site";
+import { SITE, absoluteUrl } from "../lib/site";
 import { Tag } from "../lib/tags";
 
-export const Route = createFileRoute("/")({ component: Home });
+export const Route = createFileRoute("/")({
+  head: () => {
+    const title = "Kayvane | ML Notes";
+    const description = SITE.description;
+    const canonical = absoluteUrl();
+    const personId = `${SITE.url}/#person`;
+    const websiteId = `${SITE.url}/#website`;
+    const jsonLd = {
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": "Person",
+          "@id": personId,
+          name: SITE.name,
+          url: SITE.url,
+          sameAs: SITE.socials
+            .map((social) => social.href)
+            .filter((href) => !href.startsWith("mailto:")),
+        },
+        {
+          "@type": "WebSite",
+          "@id": websiteId,
+          url: SITE.url,
+          name: SITE.name,
+          description,
+          publisher: {
+            "@id": personId,
+          },
+          inLanguage: SITE.language,
+        },
+      ],
+    };
+
+    return {
+      meta: [
+        { title },
+        { name: "description", content: description },
+        { property: "og:title", content: title },
+        { property: "og:description", content: description },
+        { property: "og:url", content: canonical },
+        { property: "og:type", content: "website" },
+        { name: "twitter:title", content: title },
+        { name: "twitter:description", content: description },
+      ],
+      links: [{ rel: "canonical", href: canonical }],
+      headScripts: [
+        {
+          type: "application/ld+json",
+          children: JSON.stringify(jsonLd),
+        },
+      ],
+    };
+  },
+  component: Home,
+});
 
 const containerVariants = {
   hidden: { opacity: 0, y: 12 },
