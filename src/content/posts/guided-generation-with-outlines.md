@@ -2,7 +2,7 @@
 title: Guided Generation with Outlines
 date: 2024-05-13
 summary: A walkthrough of Outlines and finite-state machines for constrained LLM generation, with regex and Pydantic examples.
-tags: [llm, outlines, structured-generation, pydantic, regex]
+tags: [llm, outlines, structured-generation, pydantic]
 ---
 
 _Originally published on Medium: https://medium.com/canoe-intelligence-technology/guided-generation-with-outlines-c09a0c2ce9eb_

@@ -1,6 +1,7 @@
 import { Link, createFileRoute, notFound } from "@tanstack/react-router";
 import { ArrowLeft, ArrowUpRight } from "lucide-react";
 
+import { TagPill } from "../../components/TagPill";
 import { getPostBySlug } from "../../lib/posts";
 
 export const Route = createFileRoute("/posts/$slug")({
@@ -47,37 +48,22 @@ function PostPage() {
             <p className="mt-3 text-base text-[color:var(--ink-muted)]">{post.summary}</p>
             <div className="mt-5 flex flex-wrap gap-2">
               {post.tags.map((tag) => (
-                <span key={tag} className="tech-pill">
-                  {tag}
-                </span>
+                <TagPill key={tag}>{tag}</TagPill>
               ))}
             </div>
-            {(post.github || post.script) && (
+            {post.github ? (
               <div className="mt-6 flex flex-wrap gap-4 text-xs uppercase tracking-[0.2em] text-[color:var(--ink-muted)]">
-                {post.github ? (
-                  <a
-                    className="link-arrow group"
-                    href={post.github}
-                    target="_blank"
-                    rel="noreferrer"
-                  >
-                    repo
-                    <ArrowUpRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
-                  </a>
-                ) : null}
-                {post.script ? (
-                  <a
-                    className="link-arrow group"
-                    href={post.script}
-                    target="_blank"
-                    rel="noreferrer"
-                  >
-                    script
-                    <ArrowUpRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
-                  </a>
-                ) : null}
+                <a
+                  className="link-arrow group"
+                  href={post.github}
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  repo
+                  <ArrowUpRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+                </a>
               </div>
-            )}
+            ) : null}
             <div className="mt-10 border-t border-black/5 pt-8">
               <div className="post-content" dangerouslySetInnerHTML={{ __html: post.html }} />
             </div>

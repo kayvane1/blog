@@ -40,6 +40,20 @@ a {
   color: inherit;
 }
 
+/* Hide native search clear button to avoid double clear icons. */
+input[type="search"]::-webkit-search-cancel-button,
+input[type="search"]::-webkit-search-decoration {
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+input[type="search"]::-ms-clear,
+input[type="search"]::-ms-reveal {
+  display: none;
+  width: 0;
+  height: 0;
+}
+
 .font-mono {
   font-family: var(--font-mono);
 }
@@ -52,20 +66,38 @@ a {
   @apply inline-flex items-center gap-1 rounded-full border border-black/10 bg-white px-3 py-1 text-[11px] uppercase tracking-[0.22em] text-[color:var(--ink-muted)];
 }
 
+.post-pill {
+  @apply inline-flex h-5 items-center gap-1 rounded-sm border border-black/10 bg-white px-2.5 text-[10px] uppercase leading-none tracking-[0.2em] text-[color:var(--ink-muted)];
+}
+
 .signal {
   @apply inline-flex items-center gap-2 rounded-full border border-black/10 bg-white/70 px-3 py-1 text-[11px] uppercase tracking-[0.2em] text-[color:var(--ink-muted)];
 }
 
-.signal-dot {
-  height: 7px;
-  width: 7px;
-  border-radius: 999px;
-  background: var(--accent);
-  box-shadow: 0 0 0 6px var(--ring);
-}
-
 .link-arrow {
   @apply inline-flex items-center gap-2 text-[13px] font-semibold uppercase tracking-[0.2em];
+}
+
+.post-card-title,
+.post-card-summary {
+  overflow: hidden;
+}
+
+@media (min-width: 768px) {
+  .post-card-title {
+    min-height: 3.5rem;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+  }
+
+  .post-card-summary {
+    min-height: 4.5rem;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+  }
+
 }
 
 .post-content {

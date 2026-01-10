@@ -3,8 +3,10 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { motion, MotionConfig } from "framer-motion";
 import { ArrowUpRight, Github, Linkedin, Mail, Search, X } from "lucide-react";
 
+import { TagPill } from "../components/TagPill";
 import { getAllPosts, type PostMeta } from "../lib/posts";
 import { SITE } from "../lib/site";
+import { Tag } from "../lib/tags";
 
 export const Route = createFileRoute("/")({ component: Home });
 
@@ -22,7 +24,7 @@ const itemVariants = {
   show: { opacity: 1, y: 0 },
 };
 
-const focusAreas = ["observability", "ml systems", "infra", "tooling"];
+const focusAreas = [Tag.Observability, Tag.MLSystems, Tag.Infra, Tag.Tooling];
 
 const socialIcons: Record<string, (props: { className?: string }) => JSX.Element> = {
   GitHub: Github,
@@ -92,9 +94,7 @@ function Home() {
               </div>
               <div className="mt-8 flex flex-wrap gap-2">
                 {focusAreas.map((area) => (
-                  <span key={area} className="tech-pill">
-                    {area}
-                  </span>
+                  <TagPill key={area}>{area}</TagPill>
                 ))}
               </div>
             </div>
@@ -106,10 +106,9 @@ function Home() {
                 <p className="font-mono text-xs uppercase tracking-[0.2em] text-[color:var(--ink-muted)]">
                   latest posts
                 </p>
-                <h2 className="text-2xl font-semibold">Writing</h2>
+                <h2 className="mt-2 text-2xl font-semibold">Writing</h2>
               </div>
               <div className="signal">
-                <span className="signal-dot" />
                 {entryLabel}
               </div>
             </div>
@@ -138,9 +137,7 @@ function Home() {
                   </button>
                 ) : null}
               </div>
-              {normalizedQuery ? (
-                <span className="tech-pill">filtering: {trimmedQuery}</span>
-              ) : null}
+              {normalizedQuery ? <TagPill>filtering: {trimmedQuery}</TagPill> : null}
             </div>
             <motion.div
               className="mt-6 grid gap-6 md:grid-cols-2"
@@ -204,14 +201,16 @@ function PostCard({ post }: { post: PostMeta }) {
           <span className="font-mono">{post.readingTime}</span>
         </div>
         <div>
-          <h3 className="text-xl font-semibold text-[color:var(--ink)]">{post.title}</h3>
-          <p className="mt-3 text-sm leading-6 text-[color:var(--ink-muted)]">{post.summary}</p>
+          <h3 className="post-card-title text-xl font-semibold text-[color:var(--ink)]">
+            {post.title}
+          </h3>
+          <p className="post-card-summary mt-3 text-sm leading-6 text-[color:var(--ink-muted)]">
+            {post.summary}
+          </p>
         </div>
-        <div className="flex flex-wrap gap-2">
+        <div className="post-card-tags flex flex-wrap gap-2">
           {post.tags.map((tag) => (
-            <span key={tag} className="tech-pill">
-              {tag}
-            </span>
+            <TagPill key={tag}>{tag}</TagPill>
           ))}
         </div>
         <div className="mt-auto flex flex-wrap items-center justify-between gap-4 text-xs uppercase tracking-[0.2em] text-[color:var(--ink-muted)]">
@@ -234,17 +233,6 @@ function PostCard({ post }: { post: PostMeta }) {
                 onClick={(event) => event.stopPropagation()}
               >
                 github
-              </a>
-            ) : null}
-            {post.script ? (
-              <a
-                className="hover:text-[color:var(--ink)]"
-                href={post.script}
-                target="_blank"
-                rel="noreferrer"
-                onClick={(event) => event.stopPropagation()}
-              >
-                script
               </a>
             ) : null}
           </div>

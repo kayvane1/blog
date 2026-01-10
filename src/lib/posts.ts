@@ -1,11 +1,13 @@
 import { marked } from "marked";
 
+import { Tag, isTag } from "./tags";
+
 export type PostMeta = {
   slug: string;
   title: string;
   date: string;
   summary: string;
-  tags: string[];
+  tags: Tag[];
   readingTime: string;
   github?: string;
   script?: string;
@@ -109,13 +111,12 @@ function stringValue(value?: string | string[]): string | undefined {
   return undefined;
 }
 
-function normalizeTags(value?: string | string[]): string[] {
+function normalizeTags(value?: string | string[]): Tag[] {
   if (!value) return [];
-  if (Array.isArray(value)) return value;
-  return value
-    .split(",")
-    .map((item) => item.trim())
-    .filter(Boolean);
+  const items = Array.isArray(value) ? value : value.split(",");
+  return items
+    .map((item) => item.trim().toLowerCase())
+    .filter(isTag);
 }
 
 function slugToTitle(slug: string): string {
