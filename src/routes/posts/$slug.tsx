@@ -53,12 +53,7 @@ function PostPage() {
             </div>
             {post.github ? (
               <div className="mt-6 flex flex-wrap gap-4 text-xs uppercase tracking-[0.2em] text-[color:var(--ink-muted)]">
-                <a
-                  className="link-arrow group"
-                  href={post.github}
-                  target="_blank"
-                  rel="noreferrer"
-                >
+                <a className="link-arrow group" href={post.github} target="_blank" rel="noreferrer">
                   repo
                   <ArrowUpRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
                 </a>

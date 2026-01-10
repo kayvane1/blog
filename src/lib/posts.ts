@@ -114,9 +114,7 @@ function stringValue(value?: string | string[]): string | undefined {
 function normalizeTags(value?: string | string[]): Tag[] {
   if (!value) return [];
   const items = Array.isArray(value) ? value : value.split(",");
-  return items
-    .map((item) => item.trim().toLowerCase())
-    .filter(isTag);
+  return items.map((item) => item.trim().toLowerCase()).filter(isTag);
 }
 
 function slugToTitle(slug: string): string {

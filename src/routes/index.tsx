@@ -108,9 +108,7 @@ function Home() {
                 </p>
                 <h2 className="mt-2 text-2xl font-semibold">Writing</h2>
               </div>
-              <div className="signal">
-                {entryLabel}
-              </div>
+              <div className="signal">{entryLabel}</div>
             </div>
             <div className="mt-6 flex flex-wrap items-center gap-3">
               <label className="sr-only" htmlFor="post-search">
