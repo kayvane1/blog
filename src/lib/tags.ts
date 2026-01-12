@@ -7,6 +7,8 @@ export enum Tag {
   Datadog = "datadog",
   Python = "python",
   LLM = "llm",
+  VLLM = "vllm",
+  GPU = "gpu",
   GameDev = "game-dev",
   GPT = "gpt",
   Suno = "suno",

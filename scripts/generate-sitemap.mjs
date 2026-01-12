@@ -9,9 +9,7 @@ const __dirname = path.dirname(__filename);
 const postsDir = path.join(__dirname, "..", "src", "content", "posts");
 const outputPath = path.join(__dirname, "..", "public", "sitemap.xml");
 
-const markdownFiles = (await fs.readdir(postsDir))
-  .filter((file) => file.endsWith(".md"))
-  .sort();
+const markdownFiles = (await fs.readdir(postsDir)).filter((file) => file.endsWith(".md")).sort();
 
 const posts = await Promise.all(
   markdownFiles.map(async (file) => {
