@@ -13,7 +13,7 @@ It's taken me forever to write this one, and when I wrote 80% of it last year, t
 
 For those of you who don't use it, I would highly recommend using [deepwiki](https://deepwiki.com/vllm-project/vllm) when you're working on vLLM beyond just instantiating an OpenAI compatible server. It's an amazing resource to help you understand all the settings, features and flags that are available once you start to try and tweak the system for your usecase and model.
 
-All of my illustrations here are just screengrabs from a great [presentation the creators of vLLM did at the Ray Summit in 2023](https://www.youtube.com/watch?v=5ZlavKF_98U) which I highly recommend watching if you want to go deeper.  
+All of my illustrations here are just screengrabs from a great [presentation the creators of vLLM did at the Ray Summit in 2023](https://www.youtube.com/watch?v=5ZlavKF_98U) which I highly recommend watching if you want to go deeper.
 
 While there have been many releases since then, the core concepts remain the same.
 
@@ -109,7 +109,7 @@ At the system level, vLLM keeps the scheduler and workers cleanly separated; the
 
 ![Distributed inference architecture (v0 vs v1)](/posts/how-vllm-works/Screenshot_2025-05-23_at_13.38.51.png)
 
-The engine loop is tight and repetitive: take requests, tokenize, schedule, run the model, decode, and stream back. 
+The engine loop is tight and repetitive: take requests, tokenize, schedule, run the model, decode, and stream back.
 
 ## Memory management is the scaling lever
 

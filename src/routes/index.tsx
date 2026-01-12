@@ -214,6 +214,9 @@ function Home() {
 
           <footer className="flex flex-col gap-2 text-sm text-[color:var(--ink-muted)]">
             <p>{SITE.description}</p>
+            <p className="self-end text-xs text-[color:var(--ink-muted)]">
+              Kayvane Shakerifar 2026
+            </p>
           </footer>
         </div>
       </main>
