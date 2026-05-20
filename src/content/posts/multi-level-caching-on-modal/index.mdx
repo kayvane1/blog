@@ -17,8 +17,8 @@ import { CoordinationDiagram } from "./CoordinationDiagram";
   shrink the latency cost from "every lookup is a database round-trip" down to "the popular ones
   never leave the Python process." L1 (in-process LRU) collapses the 16 threads on one container
   into one shared answer. L2 (Modal Dict + Queue) collapses the 50 containers into one database
-  call. L3 is the database itself — the source of truth, but hundreds of milliseconds away over
-  the network. The pattern has a name: _singleflight with a distributed lock and a notify channel_.
+  call. L3 is the database itself — the source of truth, but hundreds of milliseconds away over the
+  network. The pattern has a name: _singleflight with a distributed lock and a notify channel_.
 </Tldr>
 
 ---

@@ -667,7 +667,9 @@ function SharedLayer({
               key={k}
               className="flex items-baseline justify-between gap-3 border-b border-dashed border-white/10 py-1.5 text-[12px] last:border-b-0"
             >
-              <code className="bg-transparent! p-0! font-mono text-[12px] text-[#f3f3f0]!">{k}</code>
+              <code className="bg-transparent! p-0! font-mono text-[12px] text-[#f3f3f0]!">
+                {k}
+              </code>
               <span className="text-[11.5px] text-[#b6f0a5]">{v}</span>
             </li>
           ))}
