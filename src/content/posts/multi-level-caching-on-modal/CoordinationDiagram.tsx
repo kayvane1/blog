@@ -73,36 +73,28 @@ const FRAMES: Frame[] = [
 
 type Pt = { x: number; y: number; visible?: boolean; pulse?: boolean };
 
-// Token "home" positions — tokens are little dots that dock to the left of each card.
-// Each token slot is a single fixed (x, y) per phase. No per-phase y overrides — keeps
-// the spatial story consistent.
 const NODES = {
   containerA: { x: 6, y: 22 },
   containerB: { x: 6, y: 50 },
   containerC: { x: 6, y: 78 },
-  // tokens land in the upper-right of each slab row so they sit clear of the row labels
   dictPending: { x: 59, y: 23 },
   dictResult: { x: 59, y: 62 },
   queueB: { x: 91, y: 28 },
   queueC: { x: 91, y: 65 },
 };
 
-// Card render positions — actor cards are left-anchored to the right of their token.
 const CARDS = {
   A: { x: 10, y: 22 },
   B: { x: 10, y: 50 },
   C: { x: 10, y: 78 },
 };
 
-// Request-phase "pile" positions: all three tokens converge at the dict's lock
-// row with small vertical offsets so they read as "racing for the same slot".
 const REQUEST_PILE = {
   A: { x: 59, y: 23 },
   B: { x: 59, y: 30 },
   C: { x: 59, y: 37 },
 };
 
-// Per-token (per phase) coordinates. x/y are percentages of the stage box.
 const TOKEN_TRACKS: Record<string, Record<Phase, Pt>> = {
   A: {
     idle: { ...NODES.containerA, visible: true },
@@ -134,7 +126,6 @@ const TOKEN_TRACKS: Record<string, Record<Phase, Pt>> = {
     notify: { ...NODES.queueC, visible: true, pulse: true },
     wake: { ...NODES.containerC, visible: true },
   },
-  // notification ping tokens — spawn at L2 during notify, travel to queue partitions
   notifyB: {
     idle: { ...NODES.dictResult, visible: false },
     request: { ...NODES.dictResult, visible: false },
@@ -157,6 +148,25 @@ const TOKEN_TRACKS: Record<string, Record<Phase, Pt>> = {
   },
 };
 
+const ACCENT = "#2e7d32";
+
+const BTN =
+  "inline-flex items-center gap-1.5 rounded-lg border border-black/20 bg-white px-2.5 py-1.5 font-mono text-[11px] text-[color:var(--ink)] cursor-pointer transition-[color,border-color,background-color,transform] duration-150 hover:border-[color:var(--ink)] active:translate-y-px focus-visible:outline-none focus-visible:border-[#2e7d32] focus-visible:shadow-[0_0_0_2px_rgba(46,125,50,0.16)]";
+
+const NODE_BASE =
+  "absolute z-[2] flex flex-col gap-[2px] rounded-lg border border-black/10 bg-white px-2.5 py-1.5 transition-[border-color,background-color,transform] duration-300 will-change-transform";
+const NODE_ACTOR = "w-[22%] min-w-0";
+const NODE_ACTIVE = "border-[#2e7d32] bg-[rgba(46,125,50,0.16)]";
+
+const NODE_LEFT = "-translate-y-1/2";
+
+const SLAB =
+  "absolute z-[1] flex flex-col gap-1.5 rounded-[0.6rem] border border-black/10 bg-white px-2.5 py-2 transition-[border-color,background-color] duration-300";
+const SLAB_ACTIVE = "border-[#2e7d32] bg-[rgba(46,125,50,0.04)]";
+
+const TIMELINE_BTN =
+  "flex w-full cursor-pointer flex-col items-start gap-1 border-0 border-t-2 border-black/10 bg-transparent px-2 pb-2.5 pt-2 text-left font-mono transition-colors duration-200 hover:text-[color:var(--ink)]";
+
 export function CoordinationDiagram() {
   const [frameIndex, setFrameIndex] = useState(0);
   const [playing, setPlaying] = useState(true);
@@ -165,7 +175,6 @@ export function CoordinationDiagram() {
   const phase = FRAMES[frameIndex].name;
   const currentFrame = FRAMES[frameIndex];
 
-  // Advance frames on a timer
   useEffect(() => {
     if (!playing) return;
     const next = (frameIndex + 1) % FRAMES.length;
@@ -182,72 +191,64 @@ export function CoordinationDiagram() {
   }, []);
 
   return (
-    <figure className="coord-anim not-prose" aria-label="Distributed lock coordination animation">
-      <header className="coord-anim__head">
+    <figure
+      className="not-prose my-9 rounded-3xl border border-black/10 bg-white px-6 pb-5 pt-6 font-mono text-[color:var(--ink)] shadow-[0_22px_60px_-45px_rgba(20,20,19,0.3)]"
+      aria-label="Distributed lock coordination animation"
+    >
+      {/* header */}
+      <header className="mb-4 flex items-start justify-between gap-4 border-b border-black/10 pb-4 max-[640px]:flex-col">
         <div>
-          <span className="coord-anim__eyebrow">{currentFrame.title}</span>
-          <p className="coord-anim__caption">{currentFrame.caption}</p>
-        </div>
-        <div className="coord-anim__controls">
-          <button
-            type="button"
-            className="coord-anim__btn"
-            onClick={togglePlay}
-            aria-label={playing ? "pause" : "play"}
+          <span
+            className="mb-1.5 inline-block font-mono text-[10px] font-semibold uppercase tracking-[0.28em]"
+            style={{ color: ACCENT }}
           >
+            {currentFrame.title}
+          </span>
+          <p className="m-0 min-h-[3.1em] max-w-[56ch] font-sans text-[13.5px] leading-[1.55] text-[color:var(--ink)]">
+            {currentFrame.caption}
+          </p>
+        </div>
+        <div className="flex shrink-0 gap-1.5">
+          <button type="button" className={BTN} onClick={togglePlay} aria-label={playing ? "pause" : "play"}>
             {playing ? <Pause size={12} strokeWidth={2} /> : <Play size={12} strokeWidth={2} />}
             {playing ? "pause" : "play"}
           </button>
-          <button type="button" className="coord-anim__btn" onClick={restart} aria-label="restart">
+          <button type="button" className={BTN} onClick={restart} aria-label="restart">
             <RotateCcw size={12} strokeWidth={2} /> restart
           </button>
         </div>
       </header>
 
-      <div className="coord-anim__stage">
-        {/* nodes — containers (left column) */}
-        <Node
-          className="coord-anim__node coord-anim__node--actor"
-          x={CARDS.A.x}
-          y={CARDS.A.y}
-          anchor="left"
-          active={phase === "compute" || phase === "write"}
-        >
-          <span className="coord-anim__node-label">container A</span>
-          <span className="coord-anim__node-sub">{statusFor("A", phase)}</span>
-        </Node>
-        <Node
-          className="coord-anim__node coord-anim__node--actor"
-          x={CARDS.B.x}
-          y={CARDS.B.y}
-          anchor="left"
-          active={phase === "wake"}
-        >
-          <span className="coord-anim__node-label">container B</span>
-          <span className="coord-anim__node-sub">{statusFor("B", phase)}</span>
-        </Node>
-        <Node
-          className="coord-anim__node coord-anim__node--actor"
-          x={CARDS.C.x}
-          y={CARDS.C.y}
-          anchor="left"
-          active={phase === "wake"}
-        >
-          <span className="coord-anim__node-label">container C</span>
-          <span className="coord-anim__node-sub">{statusFor("C", phase)}</span>
-        </Node>
+      {/* stage */}
+      <div className="relative w-full overflow-hidden rounded-[0.85rem] border border-black/10 bg-black/[0.015] aspect-[16/7] max-[640px]:aspect-[4/5]">
+        {/* actor cards (left-anchored) */}
+        <ActorCard x={CARDS.A.x} y={CARDS.A.y} active={phase === "compute" || phase === "write"}>
+          <span className="text-[10.5px] font-bold uppercase leading-[1.1] tracking-[0.16em] text-[color:var(--ink)]">
+            container A
+          </span>
+          <span className="text-[10px] text-[color:var(--ink-muted)]">{statusFor("A", phase)}</span>
+        </ActorCard>
+        <ActorCard x={CARDS.B.x} y={CARDS.B.y} active={phase === "wake"}>
+          <span className="text-[10.5px] font-bold uppercase leading-[1.1] tracking-[0.16em] text-[color:var(--ink)]">
+            container B
+          </span>
+          <span className="text-[10px] text-[color:var(--ink-muted)]">{statusFor("B", phase)}</span>
+        </ActorCard>
+        <ActorCard x={CARDS.C.x} y={CARDS.C.y} active={phase === "wake"}>
+          <span className="text-[10.5px] font-bold uppercase leading-[1.1] tracking-[0.16em] text-[color:var(--ink)]">
+            container C
+          </span>
+          <span className="text-[10px] text-[color:var(--ink-muted)]">{statusFor("C", phase)}</span>
+        </ActorCard>
 
         {/* L2 Dict slab */}
         <Slab
-          className="coord-anim__slab coord-anim__slab--dict"
           x={38}
           y={10}
           width={24}
           height={80}
           title="L2 · Modal Dict"
-          active={
-            phase === "race" || phase === "compute" || phase === "write" || phase === "notify"
-          }
+          active={phase === "race" || phase === "compute" || phase === "write" || phase === "notify"}
         >
           <SlabRow
             label="lock(K)"
@@ -268,7 +269,6 @@ export function CoordinationDiagram() {
 
         {/* Modal Queue slab */}
         <Slab
-          className="coord-anim__slab coord-anim__slab--queue"
           x={70}
           y={15}
           width={24}
@@ -304,71 +304,75 @@ export function CoordinationDiagram() {
           </SlabRow>
         </Slab>
 
-        {/* Animated tokens */}
+        {/* tokens */}
         {Object.entries(TOKEN_TRACKS).map(([id, tracks]) => {
           const pt = tracks[phase];
-          const variant = id.startsWith("notify") ? "notify" : id.toLowerCase();
+          const isNotify = id.startsWith("notify");
           return (
-            <span
+            <Token
               key={id}
-              className={`coord-anim__token coord-anim__token--${variant}${pt.pulse ? " is-pulse" : ""}${
-                !pt.visible ? " is-hidden" : ""
-              }`}
-              style={{ left: `${pt.x}%`, top: `${pt.y}%` }}
-              aria-hidden
+              x={pt.x}
+              y={pt.y}
+              visible={Boolean(pt.visible)}
+              pulse={Boolean(pt.pulse)}
+              variant={isNotify ? "notify" : id === "A" ? "a" : "bc"}
             >
-              {id.startsWith("notify") ? "" : id}
-            </span>
+              {isNotify ? "" : id}
+            </Token>
           );
         })}
       </div>
 
-      <ol className="coord-anim__timeline">
-        {FRAMES.map((f, i) => (
-          <li
-            key={f.name}
-            className={`coord-anim__step${i === frameIndex ? " is-active" : ""}${
-              i < frameIndex ? " is-done" : ""
-            }`}
-            style={{ flex: f.duration }}
-          >
-            <button
-              type="button"
-              className="coord-anim__step-btn"
-              onClick={() => {
-                setFrameIndex(i);
-                setPlaying(false);
-              }}
-            >
-              <span className="coord-anim__step-index">{String(i + 1).padStart(2, "0")}</span>
-              <span className="coord-anim__step-title">{f.short}</span>
-            </button>
-          </li>
-        ))}
+      {/* timeline */}
+      <ol className="m-0 mt-[1.1rem] flex list-none gap-1 p-0">
+        {FRAMES.map((f, i) => {
+          const isActive = i === frameIndex;
+          const isDone = i < frameIndex;
+          return (
+            <li key={f.name} className="min-w-0 flex-shrink list-none" style={{ flex: f.duration }}>
+              <button
+                type="button"
+                className={`${TIMELINE_BTN} ${
+                  isActive
+                    ? "!border-t-[#2e7d32] text-[color:var(--ink)]"
+                    : isDone
+                      ? "border-t-black/20 text-[color:var(--ink-muted)]"
+                      : "text-[color:var(--ink-muted)]"
+                }`}
+                onClick={() => {
+                  setFrameIndex(i);
+                  setPlaying(false);
+                }}
+              >
+                <span className="font-mono text-[9px] uppercase tracking-[0.22em]">
+                  {String(i + 1).padStart(2, "0")}
+                </span>
+                <span className="block max-w-full overflow-hidden text-ellipsis whitespace-nowrap text-[10.5px]">
+                  {f.short}
+                </span>
+              </button>
+            </li>
+          );
+        })}
       </ol>
     </figure>
   );
 }
 
-function Node({
+function ActorCard({
   x,
   y,
   active,
-  className,
-  anchor,
   children,
 }: {
   x: number;
   y: number;
   active?: boolean;
-  className?: string;
-  anchor?: "center" | "left";
   children: React.ReactNode;
 }) {
-  const anchorClass = anchor === "left" ? " coord-anim__node--left" : "";
   return (
     <div
-      className={`${className ?? ""}${active ? " is-active" : ""}${anchorClass}`}
+      className={`${NODE_BASE} ${NODE_ACTOR} ${NODE_LEFT} ${active ? NODE_ACTIVE : ""}`}
       style={{ left: `${x}%`, top: `${y}%` }}
     >
       {children}
@@ -396,7 +400,6 @@ function Slab({
   height,
   title,
   active,
-  className,
   children,
 }: {
   x: number;
@@ -405,12 +408,11 @@ function Slab({
   height: number;
   title: string;
   active?: boolean;
-  className?: string;
   children: React.ReactNode;
 }) {
   return (
     <div
-      className={`${className ?? ""}${active ? " is-active" : ""}`}
+      className={`${SLAB} ${active ? SLAB_ACTIVE : ""}`}
       style={{
         left: `${x}%`,
         top: `${y}%`,
@@ -418,8 +420,10 @@ function Slab({
         height: `${height}%`,
       }}
     >
-      <span className="coord-anim__slab-title">{title}</span>
-      <div className="coord-anim__slab-body">{children}</div>
+      <span className="font-mono text-[10px] font-semibold uppercase tracking-[0.22em] text-[color:var(--ink-muted)]">
+        {title}
+      </span>
+      <div className="grid flex-1 gap-1.5">{children}</div>
     </div>
   );
 }
@@ -435,12 +439,57 @@ function SlabRow({
   highlight?: boolean;
   children: React.ReactNode;
 }) {
+  const baseRow =
+    "grid grid-cols-1 items-start gap-[3px] rounded-[0.4rem] border border-dashed border-black/10 bg-black/[0.02] px-1.5 py-1.5 text-[11px] transition-[border-color,background-color] duration-300";
+  const activeRow = "border-black/20 bg-white";
+  const highlightRow = "!border-[#2e7d32] !bg-[rgba(46,125,50,0.16)]";
   return (
     <div
-      className={`coord-anim__slab-row${active ? " is-active" : ""}${highlight ? " is-highlight" : ""}`}
+      className={`${baseRow} ${active ? activeRow : ""} ${highlight ? highlightRow : ""}`}
     >
-      <span className="coord-anim__slab-row-label">{label}</span>
-      <span className="coord-anim__slab-row-value">{children}</span>
+      <span className="font-mono text-[9.5px] uppercase tracking-[0.16em] text-[color:var(--ink-muted)]">
+        {label}
+      </span>
+      <span className="text-[11px] leading-[1.35] text-[color:var(--ink)]">{children}</span>
     </div>
+  );
+}
+
+function Token({
+  x,
+  y,
+  visible,
+  pulse,
+  variant,
+  children,
+}: {
+  x: number;
+  y: number;
+  visible: boolean;
+  pulse: boolean;
+  variant: "a" | "bc" | "notify";
+  children: React.ReactNode;
+}) {
+  const sizeClass =
+    variant === "notify" ? "h-3.5 w-3.5" : "h-[1.45rem] w-[1.45rem]";
+  const bgClass =
+    variant === "a"
+      ? "bg-[#2e7d32]"
+      : variant === "bc"
+        ? "bg-[#4a5568]"
+        : "bg-[#2e7d32]";
+  const fanout =
+    variant === "notify" && visible
+      ? "animate-[coord-anim-fanout_0.7s_ease-out]"
+      : "";
+  const pulseClass = pulse ? "animate-[coord-anim-pulse_1.4s_ease-in-out_infinite]" : "";
+  return (
+    <span
+      className={`pointer-events-none absolute z-[3] inline-flex -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border-2 border-white text-[10px] font-semibold text-white shadow-[0_6px_16px_-8px_rgba(20,20,19,0.35)] transition-[top,left,opacity,transform,background-color] duration-[700ms] will-change-[top,left] ease-[cubic-bezier(0.4,0,0.2,1)] ${sizeClass} ${bgClass} ${pulseClass} ${fanout} ${visible ? "opacity-100" : "opacity-0"}`}
+      style={{ left: `${x}%`, top: `${y}%` }}
+      aria-hidden
+    >
+      {children}
+    </span>
   );
 }

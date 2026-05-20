@@ -1,40 +1,9 @@
 import { Link, createFileRoute, notFound } from "@tanstack/react-router";
 import { ArrowLeft, ArrowUpRight } from "lucide-react";
-import { Fragment } from "react";
 
-import { ArchitectureDiagram } from "../../components/ArchitectureDiagram";
-import { CacheSimulator } from "../../components/CacheSimulator";
-import { CoordinationDiagram } from "../../components/CoordinationDiagram";
 import { TagPill } from "../../components/TagPill";
 import { getPostBySlug } from "../../lib/posts";
 import { SITE, absoluteUrl } from "../../lib/site";
-
-const INTERACTIVE_PATTERN = /<div[^>]*data-interactive="([^"]+)"[^>]*><\/div>/g;
-const INTERACTIVES: Record<string, () => JSX.Element> = {
-  "cache-simulator": () => <CacheSimulator />,
-  "architecture-diagram": () => <ArchitectureDiagram />,
-  "coordination-diagram": () => <CoordinationDiagram />,
-};
-
-type Segment = { kind: "html"; html: string } | { kind: "interactive"; name: string };
-
-function splitContent(html: string): Segment[] {
-  const segments: Segment[] = [];
-  let lastIndex = 0;
-  INTERACTIVE_PATTERN.lastIndex = 0;
-  let match: RegExpExecArray | null;
-  while ((match = INTERACTIVE_PATTERN.exec(html)) !== null) {
-    if (match.index > lastIndex) {
-      segments.push({ kind: "html", html: html.slice(lastIndex, match.index) });
-    }
-    segments.push({ kind: "interactive", name: match[1] });
-    lastIndex = match.index + match[0].length;
-  }
-  if (lastIndex < html.length) {
-    segments.push({ kind: "html", html: html.slice(lastIndex) });
-  }
-  return segments;
-}
 
 export const Route = createFileRoute("/posts/$slug")({
   loader: ({ params }) => {
@@ -108,6 +77,7 @@ export const Route = createFileRoute("/posts/$slug")({
 
 function PostPage() {
   const post = Route.useLoaderData();
+  const PostBody = post.Component;
 
   return (
     <main className="min-h-screen px-6 pb-20 pt-12">
@@ -143,15 +113,7 @@ function PostPage() {
             ) : null}
             <div className="mt-10 border-t border-black/5 pt-8">
               <div className="post-content">
-                {splitContent(post.html).map((segment, idx) => {
-                  if (segment.kind === "html") {
-                    return (
-                      <div key={`html-${idx}`} dangerouslySetInnerHTML={{ __html: segment.html }} />
-                    );
-                  }
-                  const render = INTERACTIVES[segment.name];
-                  return <Fragment key={`interactive-${idx}`}>{render ? render() : null}</Fragment>;
-                })}
+                <PostBody />
               </div>
             </div>
           </div>

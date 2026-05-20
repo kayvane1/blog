@@ -6,7 +6,12 @@ tags: [modal, caching, system-design, python]
 github: https://github.com/kayvane1/blog
 ---
 
-**TL;DR**: A document ingestion service has to resolve "Apple Inc." to a stable internal ID — exactly one ID, forever, regardless of how many containers, threads, or weeks have passed. Three cache layers shrink the latency cost from "every lookup is a database round-trip" down to "the popular ones never leave the Python process." L1 (in-process LRU) collapses the 16 threads on one container into one shared answer. L2 (Modal Dict + Queue) collapses the 50 containers into one database call. L3 is the database itself — the source of truth, but tens of milliseconds away over the network. The pattern has a name: _singleflight with a distributed lock and a notify channel_.
+import { Tldr } from "../../../components/Tldr";
+import { ArchitectureDiagram } from "./ArchitectureDiagram";
+import { CacheSimulator } from "./CacheSimulator";
+import { CoordinationDiagram } from "./CoordinationDiagram";
+
+<Tldr>A document ingestion service has to resolve "Apple Inc." to a stable internal ID — exactly one ID, forever, regardless of how many containers, threads, or weeks have passed. Three cache layers shrink the latency cost from "every lookup is a database round-trip" down to "the popular ones never leave the Python process." L1 (in-process LRU) collapses the 16 threads on one container into one shared answer. L2 (Modal Dict + Queue) collapses the 50 containers into one database call. L3 is the database itself — the source of truth, but tens of milliseconds away over the network. The pattern has a name: _singleflight with a distributed lock and a notify channel_.</Tldr>
 
 ---
 
@@ -14,7 +19,7 @@ github: https://github.com/kayvane1/blog
 
 When N concurrent callers all miss the same cache key, the dumb thing is to let all N pay the compute cost. The clever thing is to elect one to do the work and have the rest wait for the answer. In the Go world this is called **singleflight**. In the cache-papers literature it's **cache stampede prevention** or **dog-piling**. Cross-container, you need a **distributed lock** (some atomic check-and-set) plus a **notify channel** (so waiters block instead of polling). The rest of the post is how to build that on Modal, layer by layer.
 
-<div data-interactive="architecture-diagram"></div>
+<ArchitectureDiagram />
 
 Misses cascade downward. Hits propagate back up. The lock + Queue lives at L2, which is where the cross-container coordination story actually happens. The three layers exist because the latency cost of each step gets roughly an order of magnitude worse:
 
@@ -75,7 +80,7 @@ This is two primitives stacked:
 
 The Queue isn't optional. Without it, the only way for a waiter to know the holder is done is to keep polling the Dict — a network call per waiter per tick, and in the worst case 50 containers all hammering on the same Apple Inc. key. The full scenario, step by step:
 
-<div data-interactive="coordination-diagram"></div>
+<CoordinationDiagram />
 
 The flow lifted out of [`ClaimingCache`](#the-repo):
 
@@ -170,7 +175,7 @@ Two latency tradeoffs that bite:
 
 Two Modal containers sharing an L2 Dict and an L3 database. Fire requests at them and watch where the work actually happens:
 
-<div data-interactive="cache-simulator"></div>
+<CacheSimulator />
 
 A few scenarios worth firing:
 

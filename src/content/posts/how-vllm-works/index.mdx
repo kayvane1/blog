@@ -5,7 +5,9 @@ summary: A practical tour of vLLM's LLMEngine, scheduler, and paged KV cache, pl
 tags: [llm, vllm, gpu]
 ---
 
-**TL;DR**: vLLM gets its throughput from a tight engine loop that batches prefill and decode separately, plus a paged KV cache that behaves like OS memory. The result is higher utilization, less fragmentation, and better reuse of prefixes.
+import { Tldr } from "../../../components/Tldr";
+
+<Tldr>vLLM gets its throughput from a tight engine loop that batches prefill and decode separately, plus a paged KV cache that behaves like OS memory. The result is higher utilization, less fragmentation, and better reuse of prefixes.</Tldr>
 
 ---
 
