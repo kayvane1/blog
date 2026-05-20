@@ -17,8 +17,8 @@ import { CoordinationDiagram } from "./CoordinationDiagram";
   shrink the latency cost from "every lookup is a database round-trip" down to "the popular ones
   never leave the Python process." L1 (in-process LRU) collapses the 16 threads on one container
   into one shared answer. L2 (Modal Dict + Queue) collapses the 50 containers into one database
-  call. L3 is the database itself — the source of truth, but tens of milliseconds away over the
-  network. The pattern has a name: _singleflight with a distributed lock and a notify channel_.
+  call. L3 is the database itself — the source of truth, but hundreds of milliseconds away over
+  the network. The pattern has a name: _singleflight with a distributed lock and a notify channel_.
 </Tldr>
 
 ---
@@ -35,9 +35,9 @@ Misses cascade downward. Hits propagate back up. The lock + Queue lives at L2, w
 | ----- | --------------- | ------------------------------------ |
 | L1    | 100 ns – 1 µs   | Python process memory                |
 | L2    | 1 – 10 ms       | Modal Dict (intra-Modal network)     |
-| L3    | 10 – 100 ms     | Database (network hop outside Modal) |
+| L3    | 100 – 300 ms    | Database (network hop outside Modal) |
 
-Each step you avoid is worth ~10× less time. The lock matters because under a stampede, you're not just saving compute — you're collapsing N expensive L3 round-trips into one.
+Each step you avoid is worth an order of magnitude (or two) less time. The lock matters because under a stampede, you're not just saving compute — you're collapsing N expensive L3 round-trips into one.
 
 ## L1: the in-container layer
 
@@ -176,7 +176,7 @@ Why inside the lock? Because L3 reads are cheap relative to a stampede, but expe
 
 Two latency tradeoffs that bite:
 
-- **The hop itself.** L3 sits across whatever network boundary separates Modal from your DB (peering, VPC, public internet). Tens of milliseconds is normal, hundreds is not surprising if you've placed the DB in the wrong region. Pin both sides to the same region if you can.
+- **The hop itself.** L3 sits across whatever network boundary separates Modal from your DB (peering, VPC, public internet). Hundreds of milliseconds is normal; more than that is a sign the DB is in the wrong region. Pin both sides to the same region if you can.
 - **Connection pooling.** Modal containers are ephemeral. Naïve per-call connections to Postgres will exhaust the pool fast. Use a connection pool inside each container (asyncpg's built-in pool), or front the database with PgBouncer.
 
 ## The simulator

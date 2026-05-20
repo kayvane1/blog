@@ -65,12 +65,12 @@ const ACCENT_SOFT = "rgba(46, 125, 50, 0.12)";
 
 const CHIP =
   "rounded-full border border-black/20 bg-white px-2.5 py-[3px] font-mono text-[11px] text-[color:var(--ink)] cursor-pointer transition-[color,border-color,background-color,transform] duration-150 hover:not-disabled:border-[color:var(--ink)] active:not-disabled:translate-y-px disabled:cursor-not-allowed disabled:opacity-45";
-const CHIP_ACTIVE = "bg-[color:var(--ink)] text-white! border-[color:var(--ink)]";
+const CHIP_ACTIVE = "bg-[color:var(--ink)]! text-white! border-[color:var(--ink)]!";
 
 const BTN_BASE =
   "inline-flex items-center gap-1.5 rounded-lg border border-black/20 bg-white px-3 py-1.5 font-mono text-[11px] text-[color:var(--ink)] cursor-pointer transition-[color,border-color,background-color,transform] duration-150 hover:not-disabled:border-[color:var(--ink)] active:not-disabled:translate-y-px disabled:cursor-not-allowed disabled:opacity-45 focus-visible:outline-none focus-visible:border-[#2e7d32] focus-visible:shadow-[0_0_0_2px_rgba(46,125,50,0.16)]";
 const BTN_ACCENT =
-  "bg-[color:var(--ink)] text-white border-[color:var(--ink)] hover:not-disabled:bg-black";
+  "bg-[color:var(--ink)]! text-white! border-[color:var(--ink)]! hover:not-disabled:bg-black!";
 const BTN_GHOST =
   "border-dashed text-[color:var(--ink-muted)] hover:not-disabled:text-[color:var(--ink)]";
 
@@ -486,7 +486,7 @@ export function CacheSimulator() {
                         key={k}
                         className="flex items-baseline justify-between gap-3 border-b border-dashed border-black/10 py-1.5 text-[12px] last:border-b-0"
                       >
-                        <code className="bg-transparent p-0 font-mono text-[12px] text-[color:var(--ink)]">
+                        <code className="bg-transparent! p-0! font-mono text-[12px] text-[color:var(--ink)]!">
                           {k}
                         </code>
                         <span className="text-[11.5px] text-[#2e7d32]">{v}</span>
@@ -518,7 +518,7 @@ export function CacheSimulator() {
                   />
                   <span>
                     lock{" "}
-                    <code className="rounded-[0.25rem] bg-white/10 px-1.5 py-[2px] text-[10.5px] text-[#f3f3f0]">
+                    <code className="rounded-[0.25rem] bg-white/10! px-1.5 py-[2px] text-[10.5px] text-[#f3f3f0]!">
                       {shared.lock.key}
                     </code>{" "}
                     · held by container {shared.lock.holder}
@@ -618,11 +618,23 @@ function Lane({ active, letter }: { active: boolean; letter: string }) {
         style={{ backgroundImage: rail }}
       />
       <span
-        className={`pointer-events-none absolute left-1/2 top-1.5 inline-flex h-[22px] w-[22px] items-center justify-center rounded-full border bg-white font-mono text-[10px] font-semibold transition-[transform,opacity,background-color,color,border-color] duration-300 will-change-transform ${
+        className={`pointer-events-none absolute left-1/2 top-1.5 inline-flex h-[22px] w-[22px] items-center justify-center rounded-full border font-mono text-[10px] font-semibold will-change-transform ${
           active
-            ? "translate-x-[-50%] translate-y-[26px] border-[#2e7d32] bg-[#2e7d32] text-white opacity-100 shadow-[0_4px_18px_-6px_rgba(46,125,50,0.12)]"
-            : "translate-x-[-50%] border-black/20 text-[color:var(--ink-muted)] opacity-0"
+            ? "border-[#2e7d32]! bg-[#2e7d32]! text-white! opacity-100 shadow-[0_4px_18px_-6px_rgba(46,125,50,0.12)]"
+            : "border-black/20 bg-white text-[color:var(--ink-muted)]! opacity-0"
         }`}
+        style={{
+          transform: active ? "translate(-50%, 26px)" : "translate(-50%, 0)",
+          // Asymmetric transition: going down (inactive → active) glides
+          // smoothly, fading in as it slides. Going back up (active →
+          // inactive) instead fades out fast and *delays* the position
+          // reset until after the fade completes — so the upward travel
+          // is never visible. CSS picks up the destination state's
+          // transition rule on the property change.
+          transition: active
+            ? "transform 0.45s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.22s ease, background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease"
+            : "transform 0s linear 0.22s, opacity 0.18s ease",
+        }}
       >
         {letter}
       </span>
@@ -655,7 +667,7 @@ function SharedLayer({
               key={k}
               className="flex items-baseline justify-between gap-3 border-b border-dashed border-white/10 py-1.5 text-[12px] last:border-b-0"
             >
-              <code className="bg-transparent p-0 font-mono text-[12px] text-[#f3f3f0]">{k}</code>
+              <code className="bg-transparent! p-0! font-mono text-[12px] text-[#f3f3f0]!">{k}</code>
               <span className="text-[11.5px] text-[#b6f0a5]">{v}</span>
             </li>
           ))}
