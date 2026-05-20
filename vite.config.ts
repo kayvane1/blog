@@ -5,6 +5,10 @@ import viteReact from "@vitejs/plugin-react";
 import viteTsConfigPaths from "vite-tsconfig-paths";
 import tailwindcss from "@tailwindcss/vite";
 import { nitro } from "nitro/vite";
+import mdx from "@mdx-js/rollup";
+import remarkFrontmatter from "remark-frontmatter";
+import remarkMdxFrontmatter from "remark-mdx-frontmatter";
+import remarkGfm from "remark-gfm";
 
 const config = defineConfig({
   plugins: [
@@ -15,12 +19,23 @@ const config = defineConfig({
       projects: ["./tsconfig.json"],
     }),
     tailwindcss(),
+    // MDX must run before viteReact so its JSX output gets transformed.
+    {
+      enforce: "pre",
+      ...mdx({
+        remarkPlugins: [
+          remarkFrontmatter,
+          [remarkMdxFrontmatter, { name: "frontmatter" }],
+          remarkGfm,
+        ],
+      }),
+    },
     tanstackStart({
       router: {
         enableRouteTreeFormatting: false,
       },
     }),
-    viteReact(),
+    viteReact({ include: /\.(jsx|tsx|mdx)$/ }),
   ],
 });
 

@@ -1,0 +1,25 @@
+---
+title: Event Driven Evolutionary Software
+date: 2026-01-17
+summary: How observability tools can lead to a self-evolving product
+tags: [observability, agents, system-design]
+github: https://github.com/kayvane1/blog
+---
+
+I've been toying more and more with this idea as I'm starting to see the pieces lining up. A large portion of tech startups in the latest YC batches are focused on observability, and I think this makes a lot of sense. Obviously, a lot of new entrants want to come for datadog's cake, but observability as a whole I believe will be playing an even more important role in software over the coming 5 years.
+
+With the advent of agents running in sandboxes that can write complete bug fixes and incrementally improve on features, we have people in the middle (product + engineering + end users) reacting to and flagging bugs, user experience issues etc.
+
+The reality is that these are usually things that fall into two categories - Critical issue that needs to be fixed right now & not so critical issue that's mildly annoying some users, we should add it to the backlog and come back to it in the future (one day we will definately get to the bottom of that backlog)
+
+Having really strong observability at multiple levels can actually allow our systems to self-improve and self-heal. Allowing stretched teams of product & engineers to focus more on what comes next and less on stabilising and maintaining what we already have.
+
+An edge case issue that pops up in production can be automatically forwarded to an agent to work on a fix, push through CI and have live in production behind a feature flag without an engineer being required. Gradual A/B testing the fix in production over the course of a few hours gives us comfort that we're not introducing any other regressions through the fix and then we can fully switch on the fix, creating a PR with the RCA, the fix, the production metrics and tagging the engineering team for approval on releasing the feature to production.
+
+Similarly, monitoring on latency can trigger background jobs to improve system stability and resilience with the system self-healing, testing fixes and raising fixes for the engineering team to approve before.
+
+Properly tagging our UIs in systems like Pendo or hotjar can provide us with the data and insights on which parts of the application aren't being used - with AI generated reports with the data, potential hypothesis and fixes sent to product and design to figure out how to reimagine that UX.
+
+For a long time, observability tools have allowed us to monitor our systems, I believe we're on the edge of a shift, where our observability systems will become the backbone of a much quicker application development workflow, where we can rely on our systems finding and fixing issues autonomously.
+
+Does this mean the end of engineering teams? On the contrary, with the tools and systems to ship more and more reliably, we can explore more ambitious roadmaps, features, user experiences.

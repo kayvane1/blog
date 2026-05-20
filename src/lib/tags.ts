@@ -17,6 +17,13 @@ export enum Tag {
   StructuredGeneration = "structured-generation",
   Pydantic = "pydantic",
   Regex = "regex",
+  Caching = "caching",
+  SystemDesign = "system-design",
+  S3 = "s3",
+  Agents = "agents",
+  AgenticCoding = "agentic-coding",
+  Claude = "claude",
+  Productivity = "productivity",
 }
 
 export const TAGS = Object.values(Tag);

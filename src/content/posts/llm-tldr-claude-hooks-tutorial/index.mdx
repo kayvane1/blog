@@ -1,0 +1,277 @@
+---
+title: "LLM-TLDR + Claude Hooks: Fast Context Without the Token Tax"
+date: 2026-01-13
+summary: A tutorial for installing llm-tldr with uv and wiring Claude hooks for instant, structured context, plus real numbers from this repo.
+tags: [llm, tooling, claude, productivity]
+---
+
+import { Tldr } from "../../../components/Tldr";
+
+<Tldr>
+  llm-tldr builds a layered index of your code (structure, call graph, control flow, data flow) and
+  serves it from a daemon so you can feed LLMs only what they need. I wired it into Claude hooks so
+  a prompt like `tldr: context generateSitemap --project . --depth 2` injects context automatically.
+  On this repo, I saw 49% to 65% token savings and sub-200ms extract calls after warmup.
+</Tldr>
+
+---
+
+## Why I wanted this
+
+Context windows are still the biggest practical limit when you are moving fast. I do not want to dump whole files into prompts, but I also do not want to lose the details that let an LLM make safe edits. llm-tldr sits in the middle: it compresses code into a structured summary that is still precise enough to edit against.
+
+The other reason is speed. llm-tldr runs a daemon per project, so once it is warmed it can answer queries in milliseconds instead of re-parsing the repo every time.
+
+## What llm-tldr gives you
+
+llm-tldr organizes code into analysis layers so you only pay for the depth you need:
+
+- Layer 1 (structure): what functions, classes, and files exist
+- Layer 2 (call graph): who calls what
+- Layer 3 (control flow): branching and complexity inside a function
+- Layer 4 (data flow): how values move through a function
+- Layer 5 (program slice): the minimal lines that affect a specific line
+
+It also keeps a per-project cache in `.tldr/` and runs a background daemon, so repeated queries are fast.
+
+## Quick start with uv (recommended)
+
+This is the smallest setup I could make that still feels smooth:
+
+```bash
+# Install uv if you do not have it
+curl -LsSf https://astral.sh/uv/install.sh | sh
+
+# One-off run without installing a global tool
+uvx --from llm-tldr tldr warm . --lang all
+
+# Or install a tool for repeat usage
+uv tool install --from llm-tldr tldr
+```
+
+Once the cache is warm, try a few commands:
+
+```bash
+# Structure overview (fast, shallow)
+tldr structure . --lang typescript
+
+# Per-file summaries
+tldr extract scripts/generate-sitemap.mjs
+
+# Call graph and impact
+tldr context generateSitemap --project . --depth 2
+tldr impact generateSitemap .
+
+# Control/data flow for a specific function
+tldr cfg scripts/generate-sitemap.mjs generateSitemap
+tldr dfg scripts/generate-sitemap.mjs generateSitemap
+```
+
+## Claude hooks refresher (the important bits)
+
+From the Claude hooks docs, here is what matters for a practical setup:
+
+- Hooks are configured in `~/.claude/settings.json`, `.claude/settings.json`, or `.claude/settings.local.json`
+- Each hook is a command or prompt hook bound to events like `SessionStart` and `UserPromptSubmit`
+- Hooks can match on tool names or patterns using `matcher`
+- Exit code `0` injects stdout, `2` blocks with stderr, other non-zero is logged but does not block
+- `SessionStart` hooks can set env vars by writing to `CLAUDE_ENV_FILE`
+
+I only need two events: warm the cache at session start and inject context on user prompts.
+
+## Hook setup (copy/paste)
+
+Create two scripts in `.claude/hooks` and make them executable.
+
+`.claude/hooks/tldr-warm.sh`
+
+```bash
+#!/usr/bin/env bash
+set -euo pipefail
+
+project_dir="${CLAUDE_PROJECT_DIR:-$PWD}"
+tldr_lang="${TLDR_WARM_LANG:-all}"
+
+if command -v uvx >/dev/null 2>&1; then
+  uvx --from llm-tldr tldr warm "$project_dir" --lang "$tldr_lang" --background >/dev/null 2>&1 || true
+  exit 0
+fi
+
+if command -v uv >/dev/null 2>&1; then
+  uv tool run --from llm-tldr tldr warm "$project_dir" --lang "$tldr_lang" --background >/dev/null 2>&1 || true
+  exit 0
+fi
+
+exit 0
+```
+
+`.claude/hooks/tldr-on-prompt.py`
+
+```python
+#!/usr/bin/env -S uv run --script
+# /// script
+# requires-python = ">=3.10"
+# dependencies = []
+# ///
+import json
+import os
+import re
+import shlex
+import shutil
+import subprocess
+import sys
+
+
+def resolve_tldr_cmd():
+    if shutil.which("uvx"):
+        return ["uvx", "--from", "llm-tldr", "tldr"]
+    if shutil.which("uv"):
+        return ["uv", "tool", "run", "--from", "llm-tldr", "tldr"]
+    return None
+
+
+def main() -> int:
+    payload = sys.stdin.read()
+    if not payload.strip():
+        return 0
+
+    try:
+        data = json.loads(payload)
+    except json.JSONDecodeError:
+        return 0
+
+    prompt = data.get("prompt") or ""
+    match = re.search(r"tldr:\\s*(.+)", prompt, re.IGNORECASE)
+    if not match:
+        return 0
+
+    command_line = match.group(1).strip()
+    if not command_line:
+        return 0
+
+    argv = shlex.split(command_line)
+    if not argv:
+        return 0
+
+    action = argv[0]
+    allowed = {
+        "context",
+        "extract",
+        "structure",
+        "semantic",
+        "search",
+        "impact",
+        "cfg",
+        "dfg",
+        "slice",
+        "imports",
+        "importers",
+    }
+    if action not in allowed:
+        return 0
+
+    tldr_cmd = resolve_tldr_cmd()
+    if not tldr_cmd:
+        return 0
+
+    project_dir = os.environ.get("CLAUDE_PROJECT_DIR") or os.getcwd()
+    args = list(argv)
+    if action == "context" and "--project" not in args:
+        args += ["--project", project_dir]
+    if action == "structure" and len(args) == 1:
+        args.append(project_dir)
+
+    try:
+        result = subprocess.run(
+            tldr_cmd + args,
+            check=True,
+            capture_output=True,
+            text=True,
+        )
+    except subprocess.CalledProcessError:
+        return 0
+
+    output = result.stdout.strip()
+    if not output:
+        return 0
+
+    max_lines = int(os.environ.get("TLDR_MAX_LINES", "200"))
+    lines = output.splitlines()
+    if len(lines) > max_lines:
+        lines = lines[:max_lines]
+        lines.append("... (truncated)")
+
+    sys.stdout.write("## TLDR\n")
+    sys.stdout.write("\n".join(lines))
+    sys.stdout.write("\n")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
+```
+
+Wire them up in `.claude/settings.local.json` (project-local):
+
+```json
+{
+  "permissions": {
+    "allow": ["Bash(uv:*)", "Bash(uvx:*)"]
+  },
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "TLDR_WARM_LANG=all \"${CLAUDE_PROJECT_DIR}\"/.claude/hooks/tldr-warm.sh",
+            "timeout": 120
+          }
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "TLDR_MAX_LINES=200 \"${CLAUDE_PROJECT_DIR}\"/.claude/hooks/tldr-on-prompt.py",
+            "timeout": 20
+          }
+        ]
+      }
+    ]
+  }
+}
+```
+
+## Using it in prompts
+
+The prompt hook looks for a `tldr:` directive anywhere in your prompt. A few examples:
+
+```
+Can you update the sitemap script?
+tldr: extract scripts/generate-sitemap.mjs
+```
+
+```
+We need to trace how the blog routes are generated.
+tldr: context buildRouteTree --project src --depth 2
+```
+
+```
+Where is this import used?
+tldr: importers src/routeTree.gen.ts
+```
+
+The hook runs the command, injects the TLDR output, and Claude sees it as part of your prompt.
+
+## Gotchas and small tips
+
+- Semantic search uses embedding models and may download large files the first time. Start with structure and context first.
+- The cache lives in `.tldr/`. Add it to `.gitignore` if you do not want churn in your repo.
+- If you want a wider slice, increase `TLDR_MAX_LINES` or add a second `tldr:` line in the prompt.
+
+## Why this feels worth it
+
+This workflow is not just about shrinking tokens. It is about steering the model toward the exact scaffolding it needs: structure, call graph, and the handful of lines that matter. Once the hooks are in place, it feels like a zero-cost habit. You ask a question, the right context appears, and you keep moving.

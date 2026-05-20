@@ -7,7 +7,15 @@ github: https://github.com/kayvane1/blog
 script: https://github.com/kayvane1/blog/blob/main/scripts/apm_test_reference.py
 ---
 
-**TL;DR**: Integrating Datadog APM with Modal's serverless platform is unfortunately as painful as it is on any other type of infrastructure type. While the initial setup wasn't that bad to get flowing as a modal function mirrors a lambda function by design, there were a few quirks to get things working nicely around setting proper environment variables, understanding the impact of concurrent inputs on trace sampling and how certain features like memory snapshots can break the Datadog agent.
+import { Tldr } from "../../../components/Tldr";
+
+<Tldr>
+  Integrating Datadog APM with Modal's serverless platform is unfortunately as painful as it is on
+  any other type of infrastructure type. While the initial setup wasn't that bad to get flowing as a
+  modal function mirrors a lambda function by design, there were a few quirks to get things working
+  nicely around setting proper environment variables, understanding the impact of concurrent inputs
+  on trace sampling and how certain features like memory snapshots can break the Datadog agent.
+</Tldr>
 
 ---
 

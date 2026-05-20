@@ -1,0 +1,59 @@
+---
+title: On building with agents
+date: 2026-01-15
+summary: "A field report on agentic workflows: the bitter lesson, guard rails, sub-agent loops, and the evolving role of engineers."
+tags: [agentic-coding]
+github: https://github.com/kayvane1/blog
+---
+
+I've been using AI agents exclusively to build a large project for around 4-5 months now. I wanted to pause and capture the patterns that held up, the ones that did not, and the questions I am still carrying.
+
+## The bitter lesson in agent workflows
+
+The "bitter lesson" shows up fast in agent work: every major model release can make your current harness obsolete. I once built a rigid spec-driven framework to compensate for a weaker model. When a stronger release landed, that structure turned from helpful to harmful and the outputs got worse. The work was not wasted, but it was not durable.
+
+The takeaway is to expect churn. Assume you will be re-evaluating prompts, tools, and guard rails every few weeks. Build systems you can throw away without regret.
+
+## Modular guard rails and progressive disclosure
+
+The most reliable setups are modular. Instead of one heavy framework, use small guard rails that you can keep or swap independently:
+
+- CI/CD loops that run continuously, not just at merge time
+- Lightweight checks at the moment of change (pre-commit and file-edit hooks)
+- Small, well-scoped docs that give the model only what it needs
+
+Progressive disclosure is key. Long context dumps make models lazy or ignore the right constraints. Short, well-written docs and targeted retrieval reduce context rot and keep the agent focused.
+
+## Shift left, then shift earlier
+
+Quality should move left, but it can go even earlier than "before commit." The best loops begin before you write code. If you can lint, type-check, or diff-scan as you edit, you stop bad ideas before they become real code.
+
+I also like interceptors that rewrite or veto risky CLI commands, and session-end hooks that save what I learned. If the agent is getting faster, I want my learning to compound too. I now keep two context tracks: one for the agent and one for me, so I can trace the decisions without feeling disconnected from the "why."
+
+## Sub-agent driven development
+
+My workflows now vary by ticket size and risk. For small fixes, a strong model with a short plan is enough. For larger changes, I ask for a full implementation plan and then hand off tasks to sub-agents:
+
+- one agent implements
+- one reviews the spec against the code
+- one reviews code quality and risks
+
+This is effectively TDD with multiple roles. It shifts validation closer to the commit and keeps me in the loop on the decisions that matter.
+
+## The engineering shift
+
+We are in a moment where V1 ideas can be shipped fast. That is exciting, and it expands what an engineer can try. But there is a real question about whether reliance on agents will erode human analytical skill.
+
+My answer is to be intentional. Let the agent handle the repetitive surface area, and keep human effort focused on design, tradeoffs, and the hard reasoning. We should practice with these tools now; I would not be surprised if within a year we spend more time prompting than handwriting code. It feels similar to moving beyond assembly: we did not lose our ability to think, we just moved up the stack. Tools like search and mobile GPS already shifted cognition; this is the next version of that shift.
+
+## Reliability and resilience
+
+Agent services are still fragile. Outages happen, limits hit, and when the primary provider is down, it is down. That reality means we need a plan B: fallback models, alternate providers, a lighter-weight terminal agent, and a degraded workflow that still lets you move.
+
+If the stack is essential to your work, resilience is a feature, not a nice-to-have.
+
+## Core skills still matter
+
+A good engineer still translates vague requests into precise systems. That requires understanding how the underlying machinery works, even if an agent does the typing. Employers will still reward fundamentals, not how clever your prompts are. I like the idea of being the person who can walk into an unfamiliar codebase and fix it because the fundamentals are solid.
+
+Use agents to learn faster, not to abdicate understanding. Read what they do. Test their assumptions. Be the person who can explain the system, not just prompt it.
