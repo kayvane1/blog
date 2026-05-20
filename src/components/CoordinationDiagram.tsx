@@ -1,15 +1,7 @@
 import { Pause, Play, RotateCcw } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 
-type Phase =
-  | "idle"
-  | "request"
-  | "race"
-  | "register"
-  | "compute"
-  | "write"
-  | "notify"
-  | "wake";
+type Phase = "idle" | "request" | "race" | "register" | "compute" | "write" | "notify" | "wake";
 
 type Frame = {
   name: Phase;
@@ -68,8 +60,7 @@ const FRAMES: Frame[] = [
     duration: 1700,
     title: "fan-out notify",
     short: "notify",
-    caption:
-      "A iterates lock.waiters and puts a tiny message on each waiter's Queue partition.",
+    caption: "A iterates lock.waiters and puts a tiny message on each waiter's Queue partition.",
   },
   {
     name: "wake",
@@ -166,8 +157,6 @@ const TOKEN_TRACKS: Record<string, Record<Phase, Pt>> = {
   },
 };
 
-const TOTAL_DURATION = FRAMES.reduce((a, f) => a + f.duration, 0);
-
 export function CoordinationDiagram() {
   const [frameIndex, setFrameIndex] = useState(0);
   const [playing, setPlaying] = useState(true);
@@ -191,10 +180,6 @@ export function CoordinationDiagram() {
     setFrameIndex(0);
     setPlaying(true);
   }, []);
-
-  // Compute the cumulative progress (0..1) of the loop based on frame index
-  const cumulative = FRAMES.slice(0, frameIndex).reduce((a, f) => a + f.duration, 0);
-  const progress = cumulative / TOTAL_DURATION;
 
   return (
     <figure className="coord-anim not-prose" aria-label="Distributed lock coordination animation">
@@ -260,10 +245,17 @@ export function CoordinationDiagram() {
           width={24}
           height={80}
           title="L2 · Modal Dict"
-          active={phase === "race" || phase === "compute" || phase === "write" || phase === "notify"}
+          active={
+            phase === "race" || phase === "compute" || phase === "write" || phase === "notify"
+          }
         >
-          <SlabRow label="lock(K)" active={phase === "race" || phase === "register" || phase === "compute"}>
-            {phase === "race" || phase === "register" || phase === "compute" ? "holder=A, waiters=[B,C]" : "—"}
+          <SlabRow
+            label="lock(K)"
+            active={phase === "race" || phase === "register" || phase === "compute"}
+          >
+            {phase === "race" || phase === "register" || phase === "compute"
+              ? "holder=A, waiters=[B,C]"
+              : "—"}
           </SlabRow>
           <SlabRow
             label="result(K)"
@@ -286,25 +278,29 @@ export function CoordinationDiagram() {
         >
           <SlabRow
             label="partition B"
-            active={phase === "register" || phase === "compute" || phase === "write" || phase === "notify"}
+            active={
+              phase === "register" || phase === "compute" || phase === "write" || phase === "notify"
+            }
             highlight={phase === "notify"}
           >
             {phase === "register" || phase === "compute" || phase === "write"
               ? "blocking get()"
               : phase === "notify"
-              ? "← put(notify)"
-              : "—"}
+                ? "← put(notify)"
+                : "—"}
           </SlabRow>
           <SlabRow
             label="partition C"
-            active={phase === "register" || phase === "compute" || phase === "write" || phase === "notify"}
+            active={
+              phase === "register" || phase === "compute" || phase === "write" || phase === "notify"
+            }
             highlight={phase === "notify"}
           >
             {phase === "register" || phase === "compute" || phase === "write"
               ? "blocking get()"
               : phase === "notify"
-              ? "← put(notify)"
-              : "—"}
+                ? "← put(notify)"
+                : "—"}
           </SlabRow>
         </Slab>
 

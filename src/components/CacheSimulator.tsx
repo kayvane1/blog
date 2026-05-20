@@ -55,8 +55,7 @@ const initialStats = (): Stats => ({
 
 const sleep = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
 
-const isBelowL1 = (layer: Layer | null) =>
-  layer === "L2" || layer === "L3" || layer === "compute";
+const isBelowL1 = (layer: Layer | null) => layer === "L2" || layer === "L3" || layer === "compute";
 const isBelowL2 = (layer: Layer | null) => layer === "L3" || layer === "compute";
 
 export function CacheSimulator() {
@@ -101,7 +100,7 @@ export function CacheSimulator() {
 
   const computeValue = useCallback(
     (key: string) => `id_${key.replace(/[:/]/g, "_")}_${Date.now() % 10000}`,
-    []
+    [],
   );
 
   const fetchKey = useCallback(
@@ -211,7 +210,7 @@ export function CacheSimulator() {
       updateContainer(id, { status: "idle", highlight: null });
       return value;
     },
-    [computeValue, pushLog, tick, updateContainer]
+    [computeValue, pushLog, tick, updateContainer],
   );
 
   const runSingle = useCallback(
@@ -224,7 +223,7 @@ export function CacheSimulator() {
         setBusy(false);
       }
     },
-    [activeKey, busy, fetchKey]
+    [activeKey, busy, fetchKey],
   );
 
   const runThunderingHerd = useCallback(async () => {
@@ -269,7 +268,7 @@ export function CacheSimulator() {
       }));
       pushLog({ container: id, text: `restart → L1 evicted`, tone: "info" });
     },
-    [pushLog]
+    [pushLog],
   );
 
   const keyChips = useMemo(() => SEED_KEYS, []);

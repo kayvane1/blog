@@ -18,11 +18,11 @@ When N concurrent callers all miss the same cache key, the dumb thing is to let 
 
 Misses cascade downward. Hits propagate back up. The lock + Queue lives at L2, which is where the cross-container coordination story actually happens. The three layers exist because the latency cost of each step gets roughly an order of magnitude worse:
 
-| Layer | Typical latency | What it is |
-|---|---|---|
-| L1 | 100 ns – 1 µs | Python process memory |
-| L2 | 1 – 10 ms | Modal Dict (intra-Modal network) |
-| L3 | 10 – 100 ms | Database (network hop outside Modal) |
+| Layer | Typical latency | What it is                           |
+| ----- | --------------- | ------------------------------------ |
+| L1    | 100 ns – 1 µs   | Python process memory                |
+| L2    | 1 – 10 ms       | Modal Dict (intra-Modal network)     |
+| L3    | 10 – 100 ms     | Database (network hop outside Modal) |
 
 Each step you avoid is worth ~10× less time. The lock matters because under a stampede, you're not just saving compute — you're collapsing N expensive L3 round-trips into one.
 
@@ -183,16 +183,16 @@ A few scenarios worth firing:
 
 This pattern (singleflight + distributed lock + notify) shows up on every substrate. Modal Dict + Queue is the closest equivalent to Redis `SET NX PX` + Pub/Sub, which is the most common production answer. Roughly:
 
-| Substrate | Atomic claim | Notify | Lease / TTL |
-|---|---|---|---|
-| **Modal** | `Dict.put(skip_if_exists=True)` | `Queue` per-waiter partition | `partition_ttl` |
-| **Redis** | `SET NX PX` | `PUBLISH` / `SUBSCRIBE` | `EXPIRE` |
-| **etcd / Consul / ZK** | txn with revision/create check | `Watch` | lease |
-| **Memcached** | `add` | (polling) | `EXPIRE` |
-| **DynamoDB** | `PutItem` + `attribute_not_exists` | Streams → Lambda, or poll | TTL attribute |
-| **Postgres** | `INSERT ON CONFLICT` or `pg_advisory_lock` | `LISTEN/NOTIFY` | session / TTL row |
-| **Go (in-process)** | `sync.Mutex` per key | `chan struct{}` close | n/a |
-| **Python (in-process)** | `asyncio.Lock` + a `Future` stored in the cache | `await future` | n/a |
+| Substrate               | Atomic claim                                    | Notify                       | Lease / TTL       |
+| ----------------------- | ----------------------------------------------- | ---------------------------- | ----------------- |
+| **Modal**               | `Dict.put(skip_if_exists=True)`                 | `Queue` per-waiter partition | `partition_ttl`   |
+| **Redis**               | `SET NX PX`                                     | `PUBLISH` / `SUBSCRIBE`      | `EXPIRE`          |
+| **etcd / Consul / ZK**  | txn with revision/create check                  | `Watch`                      | lease             |
+| **Memcached**           | `add`                                           | (polling)                    | `EXPIRE`          |
+| **DynamoDB**            | `PutItem` + `attribute_not_exists`              | Streams → Lambda, or poll    | TTL attribute     |
+| **Postgres**            | `INSERT ON CONFLICT` or `pg_advisory_lock`      | `LISTEN/NOTIFY`              | session / TTL row |
+| **Go (in-process)**     | `sync.Mutex` per key                            | `chan struct{}` close        | n/a               |
+| **Python (in-process)** | `asyncio.Lock` + a `Future` stored in the cache | `await future`               | n/a               |
 
 The neat in-process trick is **store the Future, not the value** — the first caller starts the work and stores its `asyncio.Future` (or `sync.Once`, or Guava's `LoadingCache` entry); subsequent callers find the Future and await it. The Future _is_ the lock.
 

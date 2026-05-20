@@ -146,16 +146,11 @@ function PostPage() {
                 {splitContent(post.html).map((segment, idx) => {
                   if (segment.kind === "html") {
                     return (
-                      <div
-                        key={`html-${idx}`}
-                        dangerouslySetInnerHTML={{ __html: segment.html }}
-                      />
+                      <div key={`html-${idx}`} dangerouslySetInnerHTML={{ __html: segment.html }} />
                     );
                   }
                   const render = INTERACTIVES[segment.name];
-                  return (
-                    <Fragment key={`interactive-${idx}`}>{render ? render() : null}</Fragment>
-                  );
+                  return <Fragment key={`interactive-${idx}`}>{render ? render() : null}</Fragment>;
                 })}
               </div>
             </div>
