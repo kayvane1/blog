@@ -65,7 +65,7 @@ const ACCENT_SOFT = "rgba(46, 125, 50, 0.12)";
 
 const CHIP =
   "rounded-full border border-black/20 bg-white px-2.5 py-[3px] font-mono text-[11px] text-[color:var(--ink)] cursor-pointer transition-[color,border-color,background-color,transform] duration-150 hover:not-disabled:border-[color:var(--ink)] active:not-disabled:translate-y-px disabled:cursor-not-allowed disabled:opacity-45";
-const CHIP_ACTIVE = "bg-[color:var(--ink)] !text-white border-[color:var(--ink)]";
+const CHIP_ACTIVE = "bg-[color:var(--ink)] text-white! border-[color:var(--ink)]";
 
 const BTN_BASE =
   "inline-flex items-center gap-1.5 rounded-lg border border-black/20 bg-white px-3 py-1.5 font-mono text-[11px] text-[color:var(--ink)] cursor-pointer transition-[color,border-color,background-color,transform] duration-150 hover:not-disabled:border-[color:var(--ink)] active:not-disabled:translate-y-px disabled:cursor-not-allowed disabled:opacity-45 focus-visible:outline-none focus-visible:border-[#2e7d32] focus-visible:shadow-[0_0_0_2px_rgba(46,125,50,0.16)]";
@@ -456,7 +456,7 @@ export function CacheSimulator() {
                   <span className="inline-flex items-center font-mono text-[10px] font-semibold uppercase tracking-[0.22em] text-[color:var(--ink)]">
                     <span
                       className={`mr-1.5 inline-flex h-[1.1rem] w-[1.1rem] items-center justify-center rounded-full border border-black/20 bg-black/[0.04] text-[10px] tracking-normal ${
-                        c.highlight ? "border-[#2e7d32] !bg-[#2e7d32] text-white" : ""
+                        c.highlight ? "border-[#2e7d32] bg-[#2e7d32]! text-white" : ""
                       }`}
                     >
                       {id}

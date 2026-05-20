@@ -9,7 +9,12 @@ export const Route = createFileRoute("/posts/$slug")({
   loader: ({ params }) => {
     const post = getPostBySlug(params.slug);
     if (!post) throw notFound();
-    return post;
+    // The Component is a React function and cannot be serialized for SSR
+    // hydration. Strip it from the loader payload; the route component
+    // re-looks it up by slug at render time (the post map is module-level
+    // and identical on client + server).
+    const { Component: _Component, ...meta } = post;
+    return meta;
   },
   head: ({ loaderData }) => {
     const title = `${loaderData.title} | ${SITE.name}`;
@@ -77,7 +82,8 @@ export const Route = createFileRoute("/posts/$slug")({
 
 function PostPage() {
   const post = Route.useLoaderData();
-  const PostBody = post.Component;
+  const full = getPostBySlug(post.slug);
+  const PostBody = full?.Component;
 
   return (
     <main className="min-h-screen px-6 pb-20 pt-12">
@@ -112,9 +118,7 @@ function PostPage() {
               </div>
             ) : null}
             <div className="mt-10 border-t border-black/5 pt-8">
-              <div className="post-content">
-                <PostBody />
-              </div>
+              <div className="post-content">{PostBody ? <PostBody /> : null}</div>
             </div>
           </div>
         </article>

@@ -341,7 +341,7 @@ export function CoordinationDiagram() {
                 type="button"
                 className={`${TIMELINE_BTN} ${
                   isActive
-                    ? "!border-t-[#2e7d32] text-[color:var(--ink)]"
+                    ? "border-t-[#2e7d32]! text-[color:var(--ink)]"
                     : isDone
                       ? "border-t-black/20 text-[color:var(--ink-muted)]"
                       : "text-[color:var(--ink-muted)]"
@@ -449,7 +449,7 @@ function SlabRow({
   const baseRow =
     "grid grid-cols-1 items-start gap-[3px] rounded-[0.4rem] border border-dashed border-black/10 bg-black/[0.02] px-1.5 py-1.5 text-[11px] transition-[border-color,background-color] duration-300";
   const activeRow = "border-black/20 bg-white";
-  const highlightRow = "!border-[#2e7d32] !bg-[rgba(46,125,50,0.16)]";
+  const highlightRow = "border-[#2e7d32]! bg-[rgba(46,125,50,0.16)]!";
   return (
     <div className={`${baseRow} ${active ? activeRow : ""} ${highlight ? highlightRow : ""}`}>
       <span className="font-mono text-[9.5px] uppercase tracking-[0.16em] text-[color:var(--ink-muted)]">
