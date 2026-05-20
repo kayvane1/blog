@@ -7,7 +7,12 @@ tags: [llm, tooling, claude, productivity]
 
 import { Tldr } from "../../../components/Tldr";
 
-<Tldr>llm-tldr builds a layered index of your code (structure, call graph, control flow, data flow) and serves it from a daemon so you can feed LLMs only what they need. I wired it into Claude hooks so a prompt like `tldr: context generateSitemap --project . --depth 2` injects context automatically. On this repo, I saw 49% to 65% token savings and sub-200ms extract calls after warmup.</Tldr>
+<Tldr>
+  llm-tldr builds a layered index of your code (structure, call graph, control flow, data flow) and
+  serves it from a daemon so you can feed LLMs only what they need. I wired it into Claude hooks so
+  a prompt like `tldr: context generateSitemap --project . --depth 2` injects context automatically.
+  On this repo, I saw 49% to 65% token savings and sub-200ms extract calls after warmup.
+</Tldr>
 
 ---
 
