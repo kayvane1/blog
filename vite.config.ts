@@ -22,10 +22,7 @@ const config = defineConfig({
     {
       enforce: "pre",
       ...mdx({
-        remarkPlugins: [
-          remarkFrontmatter,
-          [remarkMdxFrontmatter, { name: "frontmatter" }],
-        ],
+        remarkPlugins: [remarkFrontmatter, [remarkMdxFrontmatter, { name: "frontmatter" }]],
       }),
     },
     tanstackStart({

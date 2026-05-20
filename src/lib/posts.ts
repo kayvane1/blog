@@ -130,7 +130,9 @@ function normalizeTags(value: string | string[] | undefined): Tag[] {
 
 function createSummary(rawSource: string): string {
   const body = stripFrontmatterBlock(rawSource);
-  const plain = stripJsx(body).replace(/[#>*`]/g, "").trim();
+  const plain = stripJsx(body)
+    .replace(/[#>*`]/g, "")
+    .trim();
   const firstParagraph = plain.split(/\n\n+/)[0] ?? "";
   return firstParagraph.slice(0, 160);
 }

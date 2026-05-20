@@ -69,8 +69,10 @@ const CHIP_ACTIVE = "bg-[color:var(--ink)] !text-white border-[color:var(--ink)]
 
 const BTN_BASE =
   "inline-flex items-center gap-1.5 rounded-lg border border-black/20 bg-white px-3 py-1.5 font-mono text-[11px] text-[color:var(--ink)] cursor-pointer transition-[color,border-color,background-color,transform] duration-150 hover:not-disabled:border-[color:var(--ink)] active:not-disabled:translate-y-px disabled:cursor-not-allowed disabled:opacity-45 focus-visible:outline-none focus-visible:border-[#2e7d32] focus-visible:shadow-[0_0_0_2px_rgba(46,125,50,0.16)]";
-const BTN_ACCENT = "bg-[color:var(--ink)] text-white border-[color:var(--ink)] hover:not-disabled:bg-black";
-const BTN_GHOST = "border-dashed text-[color:var(--ink-muted)] hover:not-disabled:text-[color:var(--ink)]";
+const BTN_ACCENT =
+  "bg-[color:var(--ink)] text-white border-[color:var(--ink)] hover:not-disabled:bg-black";
+const BTN_GHOST =
+  "border-dashed text-[color:var(--ink-muted)] hover:not-disabled:text-[color:var(--ink)]";
 
 const KBD =
   "inline-flex h-5 min-w-5 items-center justify-center rounded-[0.3rem] border border-black/20 bg-black/[0.04] px-1 font-mono text-[10px]";
@@ -419,7 +421,12 @@ export function CacheSimulator() {
           >
             invalidate
           </button>
-          <button type="button" className={`${BTN_BASE} ${BTN_GHOST}`} onClick={reset} disabled={busy}>
+          <button
+            type="button"
+            className={`${BTN_BASE} ${BTN_GHOST}`}
+            onClick={reset}
+            disabled={busy}
+          >
             reset
           </button>
         </div>

@@ -3,7 +3,8 @@ import { ArrowDownUp } from "lucide-react";
 const accent = "#2e7d32";
 const accentSoft = "rgba(46, 125, 50, 0.14)";
 
-const ROW = "grid grid-cols-[minmax(0,1.35fr)_minmax(0,1fr)] items-center gap-7 max-[640px]:grid-cols-1 max-[640px]:gap-3";
+const ROW =
+  "grid grid-cols-[minmax(0,1.35fr)_minmax(0,1fr)] items-center gap-7 max-[640px]:grid-cols-1 max-[640px]:gap-3";
 
 export function ArchitectureDiagram() {
   return (
@@ -86,7 +87,10 @@ function Caption({ title, name, sub }: { title: string; name: string; sub: strin
 
 function Rule() {
   return (
-    <div className="grid grid-cols-[minmax(0,1.35fr)_minmax(0,1fr)] gap-7 max-[640px]:grid-cols-1" aria-hidden>
+    <div
+      className="grid grid-cols-[minmax(0,1.35fr)_minmax(0,1fr)] gap-7 max-[640px]:grid-cols-1"
+      aria-hidden
+    >
       <div className="flex flex-col items-center self-stretch py-1.5">
         <RuleSegment />
         <span

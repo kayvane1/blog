@@ -209,7 +209,12 @@ export function CoordinationDiagram() {
           </p>
         </div>
         <div className="flex shrink-0 gap-1.5">
-          <button type="button" className={BTN} onClick={togglePlay} aria-label={playing ? "pause" : "play"}>
+          <button
+            type="button"
+            className={BTN}
+            onClick={togglePlay}
+            aria-label={playing ? "pause" : "play"}
+          >
             {playing ? <Pause size={12} strokeWidth={2} /> : <Play size={12} strokeWidth={2} />}
             {playing ? "pause" : "play"}
           </button>
@@ -248,7 +253,9 @@ export function CoordinationDiagram() {
           width={24}
           height={80}
           title="L2 · Modal Dict"
-          active={phase === "race" || phase === "compute" || phase === "write" || phase === "notify"}
+          active={
+            phase === "race" || phase === "compute" || phase === "write" || phase === "notify"
+          }
         >
           <SlabRow
             label="lock(K)"
@@ -444,9 +451,7 @@ function SlabRow({
   const activeRow = "border-black/20 bg-white";
   const highlightRow = "!border-[#2e7d32] !bg-[rgba(46,125,50,0.16)]";
   return (
-    <div
-      className={`${baseRow} ${active ? activeRow : ""} ${highlight ? highlightRow : ""}`}
-    >
+    <div className={`${baseRow} ${active ? activeRow : ""} ${highlight ? highlightRow : ""}`}>
       <span className="font-mono text-[9.5px] uppercase tracking-[0.16em] text-[color:var(--ink-muted)]">
         {label}
       </span>
@@ -470,18 +475,10 @@ function Token({
   variant: "a" | "bc" | "notify";
   children: React.ReactNode;
 }) {
-  const sizeClass =
-    variant === "notify" ? "h-3.5 w-3.5" : "h-[1.45rem] w-[1.45rem]";
+  const sizeClass = variant === "notify" ? "h-3.5 w-3.5" : "h-[1.45rem] w-[1.45rem]";
   const bgClass =
-    variant === "a"
-      ? "bg-[#2e7d32]"
-      : variant === "bc"
-        ? "bg-[#4a5568]"
-        : "bg-[#2e7d32]";
-  const fanout =
-    variant === "notify" && visible
-      ? "animate-[coord-anim-fanout_0.7s_ease-out]"
-      : "";
+    variant === "a" ? "bg-[#2e7d32]" : variant === "bc" ? "bg-[#4a5568]" : "bg-[#2e7d32]";
+  const fanout = variant === "notify" && visible ? "animate-[coord-anim-fanout_0.7s_ease-out]" : "";
   const pulseClass = pulse ? "animate-[coord-anim-pulse_1.4s_ease-in-out_infinite]" : "";
   return (
     <span

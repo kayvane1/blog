@@ -7,7 +7,11 @@ tags: [llm, vllm, gpu]
 
 import { Tldr } from "../../../components/Tldr";
 
-<Tldr>vLLM gets its throughput from a tight engine loop that batches prefill and decode separately, plus a paged KV cache that behaves like OS memory. The result is higher utilization, less fragmentation, and better reuse of prefixes.</Tldr>
+<Tldr>
+  vLLM gets its throughput from a tight engine loop that batches prefill and decode separately, plus
+  a paged KV cache that behaves like OS memory. The result is higher utilization, less
+  fragmentation, and better reuse of prefixes.
+</Tldr>
 
 ---
 
