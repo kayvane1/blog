@@ -98,7 +98,7 @@ function stylizeTldr(html: string): string {
   return html.replace(/<p><strong>TL;DR<\/strong>:\s*([\s\S]*?)<\/p>/i, (_match, body) => {
     const text = String(body).trim();
     const spacer = text ? " " : "";
-    return `<aside class="tldr"><p><span class="tldr-label">TL;DR</span>${spacer}${text}</p></aside>`;
+    return `<aside class="tldr"><p><span class="tldr-label">TL;DR</span><span class="tldr-body">${spacer}${text}</span></p></aside>`;
   });
 }
 
