@@ -1,4 +1,6 @@
+import { useEffect, useRef, useState } from "react";
 import { Link, createFileRoute, notFound } from "@tanstack/react-router";
+import { motion, useScroll, useSpring } from "framer-motion";
 import { ArrowLeft, ArrowUpRight } from "lucide-react";
 
 import { TagPill } from "../../components/TagPill";
@@ -9,10 +11,6 @@ export const Route = createFileRoute("/posts/$slug")({
   loader: ({ params }) => {
     const post = getPostBySlug(params.slug);
     if (!post) throw notFound();
-    // The Component is a React function and cannot be serialized for SSR
-    // hydration. Strip it from the loader payload; the route component
-    // re-looks it up by slug at render time (the post map is module-level
-    // and identical on client + server).
     const { Component: _Component, ...meta } = post;
     return meta;
   },
@@ -84,46 +82,122 @@ function PostPage() {
   const post = Route.useLoaderData();
   const full = getPostBySlug(post.slug);
   const PostBody = full?.Component;
+  const articleRef = useRef<HTMLDivElement | null>(null);
 
   return (
-    <main className="min-h-screen px-6 pb-20 pt-12">
-      <div className="mx-auto flex max-w-3xl flex-col gap-8">
-        <Link className="link-arrow group w-fit" to="/">
-          <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-1" />
-          back to home
-        </Link>
-
-        <article className="paper-card relative overflow-hidden px-6 py-10 md:px-10">
-          <div className="absolute inset-0 bg-gradient-to-br from-white via-white to-emerald-50/60" />
-          <div className="relative">
-            <div className="flex flex-wrap items-center justify-between gap-3 text-xs uppercase tracking-[0.2em] text-[color:var(--ink-muted)]">
-              <span className="font-mono">{formatDate(post.date)}</span>
-              <span className="font-mono">{post.readingTime}</span>
-            </div>
-            <h1 className="mt-4 text-3xl font-semibold text-[color:var(--ink)] md:text-4xl">
-              {post.title}
-            </h1>
-            <p className="mt-3 text-base text-[color:var(--ink-muted)]">{post.summary}</p>
-            <div className="mt-5 flex flex-wrap gap-2">
-              {post.tags.map((tag) => (
-                <TagPill key={tag}>{tag}</TagPill>
-              ))}
-            </div>
-            {post.github ? (
-              <div className="mt-6 flex flex-wrap gap-4 text-xs uppercase tracking-[0.2em] text-[color:var(--ink-muted)]">
-                <a className="link-arrow group" href={post.github} target="_blank" rel="noreferrer">
-                  repo
-                  <ArrowUpRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
-                </a>
-              </div>
-            ) : null}
-            <div className="mt-10 border-t border-black/5 pt-8">
-              <div className="post-content">{PostBody ? <PostBody /> : null}</div>
-            </div>
+    <>
+      <ReadingProgress target={articleRef} />
+      <main className="min-h-[100dvh] px-6 pb-24 pt-10 md:px-10 md:pt-16">
+        <div className="mx-auto flex w-full max-w-6xl flex-col gap-12">
+          <div className="flex items-center justify-between">
+            <Link className="link-arrow group" to="/">
+              <ArrowLeft className="h-3.5 w-3.5 transition-transform group-hover:-translate-x-1" />
+              index
+            </Link>
+            <span className="numeric text-[11px] uppercase tracking-[0.22em] text-[color:var(--ink-faint)]">
+              Kayvane / Notes
+            </span>
           </div>
-        </article>
-      </div>
-    </main>
+
+          <article
+            ref={articleRef}
+            className="grid grid-cols-1 gap-12 md:grid-cols-[200px_1fr] md:gap-16"
+          >
+            <aside className="md:sticky md:top-16 md:self-start">
+              <div className="flex flex-col gap-5">
+                <div>
+                  <p className="eyebrow">Published</p>
+                  <p className="numeric mt-1 text-[13px] text-[color:var(--ink)]">
+                    {formatDate(post.date)}
+                  </p>
+                </div>
+                <div>
+                  <p className="eyebrow">Reading</p>
+                  <p className="numeric mt-1 text-[13px] text-[color:var(--ink)]">
+                    {post.readingTime}
+                  </p>
+                </div>
+                {post.tags.length ? (
+                  <div>
+                    <p className="eyebrow">Tags</p>
+                    <div className="mt-2 flex flex-wrap gap-1.5">
+                      {post.tags.map((tag) => (
+                        <TagPill key={tag}>{tag}</TagPill>
+                      ))}
+                    </div>
+                  </div>
+                ) : null}
+                {post.github ? (
+                  <div>
+                    <p className="eyebrow">Source</p>
+                    <a
+                      className="group mt-1 inline-flex items-center gap-1.5 text-[13px] text-[color:var(--ink)] transition hover:text-[color:var(--accent)]"
+                      href={post.github}
+                      target="_blank"
+                      rel="noreferrer"
+                    >
+                      repo
+                      <ArrowUpRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+                    </a>
+                  </div>
+                ) : null}
+              </div>
+            </aside>
+
+            <div>
+              <motion.header
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ type: "spring", stiffness: 100, damping: 20 }}
+              >
+                <p className="eyebrow">Entry</p>
+                <h1 className="mt-3 font-display text-[2.5rem] leading-[1.05] tracking-tight text-[color:var(--ink)] md:text-[3.25rem]">
+                  {post.title}
+                </h1>
+                {post.summary ? (
+                  <p className="mt-5 max-w-[58ch] text-[17px] leading-relaxed text-[color:var(--ink-muted)]">
+                    {post.summary}
+                  </p>
+                ) : null}
+              </motion.header>
+
+              <div className="mt-10 h-px w-full bg-[color:var(--rule)]" />
+
+              <div className="post-content mt-10">{PostBody ? <PostBody /> : null}</div>
+
+              <div className="mt-16 flex flex-col gap-4 border-t border-[color:var(--rule-soft)] pt-8 md:flex-row md:items-center md:justify-between">
+                <Link className="link-arrow group" to="/">
+                  <ArrowLeft className="h-3.5 w-3.5 transition-transform group-hover:-translate-x-1" />
+                  back to index
+                </Link>
+                <span className="numeric text-[11px] uppercase tracking-[0.22em] text-[color:var(--ink-faint)]">
+                  end of entry
+                </span>
+              </div>
+            </div>
+          </article>
+        </div>
+      </main>
+    </>
+  );
+}
+
+function ReadingProgress({ target }: { target: React.RefObject<HTMLDivElement | null> }) {
+  const [ready, setReady] = useState(false);
+  useEffect(() => {
+    setReady(target.current !== null);
+  }, [target]);
+
+  const { scrollYProgress } = useScroll({
+    target: ready ? target : undefined,
+    offset: ["start start", "end end"],
+  });
+  const scaleX = useSpring(scrollYProgress, { stiffness: 200, damping: 30, mass: 0.3 });
+
+  return (
+    <div className="reading-progress" aria-hidden>
+      <motion.span style={{ scaleX, transformOrigin: "0% 50%" }} />
+    </div>
   );
 }
 

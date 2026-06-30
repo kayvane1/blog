@@ -2,16 +2,22 @@
 
 :root {
   color-scheme: light;
-  --paper: #f6f3ec;
-  --paper-bright: #fbfaf7;
-  --ink: #141413;
-  --ink-muted: #4c4a45;
-  --accent: #0f766e;
-  --grid: rgba(20, 20, 19, 0.08);
-  --ring: rgba(15, 118, 110, 0.18);
-  --font-sans: "Space Grotesk", "Helvetica Neue", Arial, sans-serif;
+  --paper: #f4f1e8;
+  --paper-bright: #faf8f2;
+  --paper-line: rgba(20, 20, 19, 0.06);
+  --ink: #16140f;
+  --ink-soft: #2a2722;
+  --ink-muted: #6b665d;
+  --ink-faint: #8f897e;
+  --accent: #15665e;
+  --accent-soft: rgba(21, 102, 94, 0.12);
+  --rule: rgba(20, 20, 19, 0.1);
+  --rule-soft: rgba(20, 20, 19, 0.05);
+  --ring: rgba(21, 102, 94, 0.22);
+  --font-display: "Instrument Serif", "Times New Roman", Georgia, serif;
+  --font-sans: "Geist", "Helvetica Neue", Arial, sans-serif;
   --font-mono:
-    "IBM Plex Mono", "SFMono-Regular", Menlo, Monaco, Consolas, "Liberation Mono", "Courier New",
+    "JetBrains Mono", "SFMono-Regular", Menlo, Monaco, Consolas, "Liberation Mono", "Courier New",
     monospace;
 }
 
@@ -19,28 +25,41 @@
   box-sizing: border-box;
 }
 
+html {
+  scroll-behavior: smooth;
+}
+
 body {
   margin: 0;
   font-family: var(--font-sans);
+  font-feature-settings: "ss01", "cv11";
   color: var(--ink);
   background-color: var(--paper);
   background-image:
-    linear-gradient(var(--grid) 1px, transparent 1px),
-    linear-gradient(90deg, var(--grid) 1px, transparent 1px),
-    radial-gradient(circle at 15% 15%, rgba(255, 255, 255, 0.7), transparent 55%);
+    linear-gradient(var(--paper-line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--paper-line) 1px, transparent 1px),
+    radial-gradient(circle at 12% 8%, rgba(255, 255, 255, 0.55), transparent 45%),
+    radial-gradient(circle at 88% 92%, rgba(21, 102, 94, 0.04), transparent 55%);
   background-size:
-    28px 28px,
-    28px 28px,
+    32px 32px,
+    32px 32px,
+    100% 100%,
     100% 100%;
+  background-attachment: fixed;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  letter-spacing: -0.005em;
 }
 
 a {
   color: inherit;
 }
 
-/* Hide native search clear button to avoid double clear icons. */
+::selection {
+  background: var(--accent-soft);
+  color: var(--ink);
+}
+
 input[type="search"]::-webkit-search-cancel-button,
 input[type="search"]::-webkit-search-decoration {
   -webkit-appearance: none;
@@ -54,122 +73,393 @@ input[type="search"]::-ms-reveal {
   height: 0;
 }
 
+/* ---------- Typography utilities ---------- */
+
 .font-mono {
   font-family: var(--font-mono);
 }
 
-.paper-card {
-  @apply rounded-3xl border border-black/5 bg-white/80 shadow-[0_20px_50px_-40px_rgba(15,118,110,0.35)];
+.font-display {
+  font-family: var(--font-display);
+  font-weight: 400;
+  letter-spacing: -0.015em;
+}
+
+.display-xl {
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: clamp(3rem, 7vw + 1rem, 6.5rem);
+  line-height: 0.95;
+  letter-spacing: -0.025em;
+}
+
+.display-italic {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-weight: 400;
+}
+
+.eyebrow {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.22em;
+  color: var(--ink-faint);
+}
+
+.numeric {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum";
+}
+
+/* ---------- Primitives ---------- */
+
+.rule {
+  border-top: 1px solid var(--rule);
 }
 
 .tech-pill {
-  @apply inline-flex items-center gap-1 rounded-full border border-black/10 bg-white px-3 py-1 text-[11px] uppercase tracking-[0.22em] text-[color:var(--ink-muted)];
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.2rem 0.55rem;
+  border: 1px solid var(--rule);
+  background: rgba(255, 255, 255, 0.55);
+  border-radius: 9999px;
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  text-transform: lowercase;
+  letter-spacing: 0.05em;
+  color: var(--ink-muted);
+  transition:
+    border-color 200ms ease,
+    color 200ms ease,
+    background 200ms ease;
 }
 
-.post-pill {
-  @apply inline-flex h-5 items-center gap-1 rounded-sm border border-black/10 bg-white px-2.5 text-[10px] uppercase leading-none tracking-[0.2em] text-[color:var(--ink-muted)];
+.tech-pill:hover {
+  border-color: rgba(21, 102, 94, 0.4);
+  color: var(--ink);
 }
 
 .signal {
-  @apply inline-flex items-center gap-2 rounded-full border border-black/10 bg-white/70 px-3 py-1 text-[11px] uppercase tracking-[0.2em] text-[color:var(--ink-muted)];
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.25rem 0.6rem;
+  border: 1px solid var(--rule);
+  background: rgba(255, 255, 255, 0.55);
+  border-radius: 9999px;
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  color: var(--ink-muted);
 }
 
 .link-arrow {
-  @apply inline-flex items-center gap-2 text-[13px] font-semibold uppercase tracking-[0.2em];
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  color: var(--ink);
+  transition: color 200ms ease;
 }
 
-.post-card-title,
-.post-card-summary {
+.link-arrow:hover {
+  color: var(--accent);
+}
+
+.live-dot {
+  position: relative;
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  border-radius: 9999px;
+  background: var(--accent);
+  flex-shrink: 0;
+}
+
+.live-dot::after {
+  content: "";
+  position: absolute;
+  inset: -3px;
+  border-radius: 9999px;
+  border: 1px solid var(--accent);
+  opacity: 0;
+  animation: live-pulse 2.2s ease-out infinite;
+}
+
+@keyframes live-pulse {
+  0% {
+    opacity: 0.5;
+    transform: scale(0.6);
+  }
+  80% {
+    opacity: 0;
+    transform: scale(1.6);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.6);
+  }
+}
+
+/* ---------- Editorial post index row ---------- */
+
+.index-row {
+  position: relative;
+  display: grid;
+  grid-template-columns: 100px 1fr auto;
+  gap: 1.25rem;
+  align-items: baseline;
+  padding: 1.4rem 0.25rem;
+  border-top: 1px solid var(--rule-soft);
+  cursor: pointer;
+  transition: padding-left 240ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.index-row::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 50%;
+  width: 0;
+  height: 1px;
+  background: var(--accent);
+  transform: translateY(-50%);
+  transition: width 320ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.index-row:hover,
+.index-row:focus-visible {
+  padding-left: 1.5rem;
+  outline: none;
+}
+
+.index-row:hover::before,
+.index-row:focus-visible::before {
+  width: 1rem;
+}
+
+.index-row:last-child {
+  border-bottom: 1px solid var(--rule-soft);
+}
+
+@media (max-width: 720px) {
+  .index-row {
+    grid-template-columns: 1fr;
+    gap: 0.5rem;
+    padding: 1.1rem 0.25rem;
+  }
+}
+
+.index-title {
+  font-family: var(--font-display);
+  font-size: clamp(1.25rem, 1.4vw + 1rem, 1.75rem);
+  line-height: 1.15;
+  letter-spacing: -0.015em;
+  color: var(--ink);
+}
+
+.index-summary {
+  margin-top: 0.5rem;
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--ink-muted);
+  max-height: 0;
   overflow: hidden;
+  opacity: 0;
+  transition:
+    max-height 320ms cubic-bezier(0.16, 1, 0.3, 1),
+    opacity 240ms ease,
+    margin-top 240ms ease;
 }
 
-@media (min-width: 768px) {
-  .post-card-title {
-    min-height: 3.5rem;
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-  }
-
-  .post-card-summary {
-    min-height: 4.5rem;
-    display: -webkit-box;
-    -webkit-line-clamp: 3;
-    -webkit-box-orient: vertical;
-  }
+.index-row:hover .index-summary,
+.index-row:focus-visible .index-summary,
+.index-row[data-expanded="true"] .index-summary {
+  max-height: 6rem;
+  opacity: 1;
 }
+
+/* ---------- Post content ---------- */
 
 .post-content {
-  @apply text-[15px] leading-7 text-[color:var(--ink-muted)];
+  font-size: 16px;
+  line-height: 1.7;
+  color: var(--ink-soft);
+  max-width: 65ch;
+}
+
+.post-content > * + * {
+  margin-top: 1.1rem;
 }
 
 .post-content hr {
-  margin: 1.75rem 0;
+  margin: 2rem 0;
   border: none;
-  border-top: 1px solid rgba(20, 20, 19, 0.08);
+  border-top: 1px solid var(--rule);
 }
 
 .post-content h2 {
-  @apply mt-10 text-2xl font-semibold text-[color:var(--ink)];
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: clamp(1.5rem, 1.5vw + 1rem, 2rem);
+  line-height: 1.1;
+  letter-spacing: -0.015em;
+  color: var(--ink);
+  margin-top: 2.5rem;
 }
 
 .post-content h3 {
-  @apply mt-8 text-xl font-semibold text-[color:var(--ink)];
-}
-
-.post-content p {
-  @apply mt-4;
+  font-family: var(--font-sans);
+  font-weight: 600;
+  font-size: 1.05rem;
+  letter-spacing: -0.005em;
+  color: var(--ink);
+  margin-top: 2rem;
 }
 
 .post-content a {
-  @apply underline decoration-black/20 underline-offset-4 transition hover:decoration-[color:var(--accent)];
+  text-decoration: underline;
+  text-decoration-color: var(--rule);
+  text-underline-offset: 4px;
+  text-decoration-thickness: 1px;
+  transition:
+    text-decoration-color 200ms ease,
+    color 200ms ease;
+}
+
+.post-content a:hover {
+  color: var(--accent);
+  text-decoration-color: var(--accent);
 }
 
 .post-content ul,
 .post-content ol {
-  @apply mt-4 space-y-2 pl-5;
+  padding-left: 1.25rem;
+}
+
+.post-content ul > li,
+.post-content ol > li {
+  margin-top: 0.4rem;
 }
 
 .post-content ul > li {
-  @apply list-disc;
+  list-style: disc;
 }
 
 .post-content ol > li {
-  @apply list-decimal;
+  list-style: decimal;
 }
 
 .post-content table {
-  @apply mt-6 w-full border-collapse text-[13px];
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+  font-family: var(--font-mono);
 }
 
 .post-content th,
 .post-content td {
-  @apply border border-black/10 px-3 py-2 text-left;
+  border-bottom: 1px solid var(--rule);
+  padding: 0.6rem 0.5rem;
+  text-align: left;
 }
 
-.post-content th {
-  @apply bg-black/5 font-semibold text-[color:var(--ink)];
+.post-content thead th {
+  border-bottom: 1px solid var(--ink);
+  font-weight: 600;
+  color: var(--ink);
 }
 
 .post-content pre {
-  @apply mt-6 overflow-x-auto rounded-2xl bg-[#0e0f11] p-5 text-[13px] text-slate-100;
+  margin-top: 1.5rem;
+  overflow-x: auto;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: #0e0f11;
+  padding: 1.1rem 1.25rem;
+  font-size: 13px;
+  line-height: 1.55;
+  color: #e6e4dd;
 }
 
 .post-content blockquote {
-  @apply mt-6 border-l-2 border-[color:var(--accent)] pl-4 italic text-[color:var(--ink-muted)];
+  margin-top: 1.5rem;
+  border-left: 2px solid var(--accent);
+  padding-left: 1rem;
+  font-family: var(--font-display);
+  font-style: italic;
+  font-size: 1.15rem;
+  line-height: 1.5;
+  color: var(--ink-soft);
 }
 
 .post-content code {
-  @apply rounded bg-black/5 px-2 py-0.5 text-[13px] text-[color:var(--ink)];
+  background: rgba(20, 20, 19, 0.05);
+  padding: 0.1rem 0.35rem;
+  border-radius: 4px;
+  font-size: 13.5px;
+  color: var(--ink);
 }
 
 .post-content pre code {
-  @apply bg-transparent p-0 text-slate-100;
+  background: transparent;
+  padding: 0;
+  color: inherit;
 }
 
-/* ---------- Keyframes ---------- */
-/* Used by post-bundle components via Tailwind arbitrary-value
-   animations like `animate-[cache-sim-pulse_1.4s_ease-in-out_infinite]`. */
+/* ---------- Reading progress ---------- */
+
+.reading-progress {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: transparent;
+  z-index: 40;
+  pointer-events: none;
+}
+
+.reading-progress > span {
+  display: block;
+  height: 100%;
+  background: var(--accent);
+  transform-origin: left;
+  will-change: transform;
+}
+
+/* ---------- Search input ---------- */
+
+.search-input {
+  width: 100%;
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid var(--rule);
+  padding: 0.6rem 2rem 0.6rem 1.6rem;
+  font-family: var(--font-sans);
+  font-size: 15px;
+  color: var(--ink);
+  outline: none;
+  transition: border-color 200ms ease;
+}
+
+.search-input::placeholder {
+  color: var(--ink-faint);
+}
+
+.search-input:focus {
+  border-bottom-color: var(--accent);
+}
+
+/* ---------- Keyframes used by post-bundle components ---------- */
 
 @keyframes cache-sim-pulse {
   0%,

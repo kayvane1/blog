@@ -4,7 +4,7 @@ export const SITE = {
   language: "en",
   description: "Machine learning engineer writing about systems, ML infrastructure, and new tools.",
   intro:
-    "Notes from shipping ML systems, debugging pipelines, and stress-testing ideas in production.",
+    "Writing things down helps me check my understanding of a topic — hopefully it can help someone else too.",
   githubRepo: "https://github.com/kayvane1/blog",
   socials: [
     { label: "GitHub", href: "https://github.com/kayvane1" },

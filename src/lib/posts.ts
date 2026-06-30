@@ -47,25 +47,15 @@ const modules = import.meta.glob("../content/posts/*/index.mdx", {
   eager: true,
 }) as Record<string, MdxModule>;
 
-// Raw source — needed for word-count / reading-time estimation, where we
-// strip JSX so embedded components don't inflate the count.
-const rawSources = import.meta.glob("../content/posts/*/index.mdx", {
-  eager: true,
-  query: "?raw",
-}) as Record<string, unknown>;
+// Raw MDX text keyed by slug. The `@mdx-js/rollup` plugin intercepts any
+// `*.mdx?raw` import and returns the compiled module instead of source, so
+// we read the raw text out-of-band via a Vite virtual module (see
+// `rawPostsPlugin` in vite.config.ts).
+import rawSourcesBySlug from "virtual:post-raw-sources";
 
 const posts: Post[] = Object.entries(modules)
-  .map(([path, mod]) => toPost(path, mod, readSource(rawSources[path])))
+  .map(([path, mod]) => toPost(path, mod, rawSourcesBySlug[slugFromPath(path)] ?? ""))
   .sort((a, b) => toTimestamp(b.date) - toTimestamp(a.date));
-
-function readSource(value: unknown): string {
-  if (typeof value === "string") return value;
-  if (value && typeof value === "object" && "default" in value) {
-    const inner = (value as { default: unknown }).default;
-    if (typeof inner === "string") return inner;
-  }
-  return "";
-}
 
 const postsBySlug = new Map(posts.map((post) => [post.slug, post]));
 
