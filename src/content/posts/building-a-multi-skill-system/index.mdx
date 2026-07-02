@@ -1,0 +1,101 @@
+---
+title: Skill orchestrations, and what I like about pstack
+date: 2026-05-28
+summary: A teardown of pstack by Lauren Tan, and the extensibility move I think will turn skill orchestrations into continual learning loops.
+tags: [agents, agentic-coding, tooling, claude, productivity]
+github: https://github.com/cursor/plugins/tree/main/pstack
+---
+
+import { Tldr } from "../../../components/Tldr";
+import { SkillGraph } from "./SkillGraph";
+import { FanOutDiagram } from "./FanOutDiagram";
+
+<Tldr>
+  A handful of engineers are publishing their internal workflows as composable skill systems — first
+  superpowers, then Matt Pocock's library, and this week pstack from Lauren Tan
+  ([@poteto](https://x.com/poteto)), shipped under Cursor's plugins repo. Pstack is organised as
+  three layers: a workflow that picks a playbook, playbooks that lay out the steps an agent has to
+  walk through, and principles that ground how the agent behaves at each step. The shape is more
+  interesting than the rules, because principles are the unit you'd extend. With the right harness
+  watching your traces and PRs, the same shape becomes a continual learning loop.
+</Tldr>
+
+---
+
+## The skill-orchestration wave
+
+A few engineers I follow have started publishing their day-to-day workflows as skill systems you can install and run. The first one that really landed for me was [superpowers](https://github.com/obra/superpowers). It changed how I used and thought about skills, full stop. It's still part of my workflow now.
+
+Then Matt Pocock's [skills library](https://github.com/mattpocock/skills) showed up and added another layer to my mental model. What I like about Matt's skills is that they're drawn from engineering first principles, with a lot of the ideas pulled from engineering books and distilled into small, composable, targeted skills you can actually reach for when the scenario calls for it. The two I use most are `grill-me` and `improve-codebase-architecture` — the second one I lean on a lot when I'm trying to reason about abstractions in a codebase.
+
+This week Lauren Tan ([@poteto](https://x.com/poteto)) published [pstack](https://github.com/cursor/plugins/tree/main/pstack) under Cursor's plugins repo. It's another one of these skill-orchestration plugins, and I wanted to get familiar with it because the description promised to solve a few of the pain points I've been running into with this generation of agentic coding tools.
+
+## The pain it speaks to
+
+The big one for me is the volume of code that gets generated to fix a bug or ship a feature. The models feel sloppy lately. That has had a chain reaction in PR complexity — it's becoming the norm to see much larger diffs land, which makes them harder to review and quietly increases the cognitive debt sitting on the team.
+
+What caught my eye about pstack is that it puts an engineering-first lens over the whole agent loop. The bias is toward the minimal diff that solves the problem and keeps the codebase maintainable, not towards creating overly defensive code. Once I dug in, there were a few structural patterns that I thought were very clever and can see why there has been a high level of adoption within the Cursor team.
+
+## The shape
+
+Pstack is a three-layer system.
+
+- A **workflow** at the top — one skill (`/poteto-mode`) that reads your request and routes.
+- A set of **playbooks** in the middle — recipes for the shape of work in front of you (bug fix, feature, refactor, perf, prototype, and so on). Each playbook is a numbered sequence of steps the agent walks through.
+- A set of **principles** at the bottom — single-rule leaf skills that ground how the agent should behave at each step.
+
+The interactive diagram below maps the whole thing. Picking a playbook unfolds its execution DAG — the numbered steps that get copied into the agent's todolist verbatim, along with the workflow skills called at each step and the principles each step applies. Picking a workflow skill or a principle keeps the catalog view and lights up everything that uses it.
+
+<SkillGraph />
+
+A few things stood out to me once I had this map.
+
+The orchestrator is a very simple markdown-based mapping table — if the task looks like `X`, use that playbook.
+
+Playbook steps get copied **verbatim** into the agent's working todolist before it reasons about the task. The skill is explicit that paraphrasing is the failure mode it's structurally avoiding. You can skip a step, but only with a stated reason — silent drops aren't allowed. I think this is doing a lot of the heavy lifting in practice.
+
+And the principles sit one tier below the playbooks, each in its own file. They're indexed inline by the orchestrator and cited by name at the points where they apply.
+
+There's a detail in the frontmatter worth flagging. Every principle skill (and the orchestrator itself, and most of the workflow skills) is shipped with `disable-model-invocation: true`. That flag tells the harness not to auto-trigger the skill based on a keyword match in the user's message. The principles only fire when the orchestrator routes to them. The orchestrator only fires through one of two explicit entry points (more on that below). `architect`, `arena`, `interrogate`, and friends only fire when a playbook step calls them out by name. So the failure mode where the model reads the prompt, decides a principle's description matches, and silently pulls its rules into a task you didn't want opinionated — that's just gone. The rules apply when you've routed in.
+
+## Two entry points, one wrapper
+
+OK so this is the bit I kept skipping past on the first few reads, and once it clicked I think it's the cleverest move in the plugin.
+
+There are two ways into the system. The first is the obvious one — I type `/poteto-mode` in the chat and the harness loads `poteto-mode/SKILL.md` in the main thread. Standard slash-command stuff.
+
+The second one is what took me a minute. Any time the main agent fans work out to a child (a code-writing delegate, a parser for a large artifact, an ad-hoc helper) it does it through a `Task` call with `subagent_type: "poteto-agent"`. And the `poteto-agent` definition itself is six lines. Its entire body is "read `poteto-mode/SKILL.md` in full before any work, including its inline Principles index". That's the whole subagent.
+
+The orchestrator spells the equivalence out: "`/poteto-mode` and `subagent_type: 'poteto-agent'` route through the same wrapper." Two doors, one room.
+
+The bit I had to sit with for a second is the `Task` defaults. The subagent type and the underlying model are independent arguments on the same call. The subagent type picks the preamble (the read-SKILL.md instruction). The model argument picks the LLM that runs underneath. The orchestrator's defaults are `run_in_background: true`, agent mode (readonly strips MCP), file pointers rather than inlined context, and an explicit model — `composer-2.5-fast` for code, `claude-opus-4-7-thinking-xhigh` for prose and judgment. So you can keep the same wrapper across different models.
+
+Here's the rough mechanic.
+
+<FanOutDiagram />
+
+Once that clicked, the pattern is: parent's on a thinking model, reviewing the work. Three or four code-writing children get spawned on a faster, cheaper model. All of them entered through the same six-line wrapper, re-read the same SKILL.md, navigated to the same principle leaves before touching the diff. The parent didn't have to repeat the house style in the child prompts because the wrapper handles that.
+
+This is what the README is calling "fearless parallelism" and I think I finally get it. The usual worry with fan-outs is that children drift from the parent's intent, and pstack's answer here is just to give every child a wrapper whose only job is to load the same operating manual before it touches the work.
+
+A couple of edges that are worth knowing. Some workflow skills (`how`, `why`, `interrogate`, `reflect`) configure their _own_ `subagent_type` because their value comes from mixing model families adversarially. The rule is to default to `poteto-agent` for direct delegates inside a playbook step, but respect the routed skill's own prescription when you're going through one of them — don't paper over it.
+
+The other one, called out explicitly in `references/plan.md`, is that you shouldn't use Cursor's built-in `plan` subagent type. It brings its own system prompt and ignores this skill entirely. `generalPurpose` is the fallback if `poteto-agent` isn't available, but the README is direct about what happens there: "substituting `generalPurpose` skips that read and drifts".
+
+Honestly, the whole composition comes down to one rule: every fan-out goes through the wrapper.
+
+## The part I'm most excited about
+
+The principle layer is extensible. As you watch your agent fail in new ways, you add principles to catch those failure modes and link them from the playbook steps where the failure showed up. Today that's a manual edit, but it doesn't have to be.
+
+If you had your own version of pstack — same shape, customised to your tools and your team's conventions — you could close the loop. A background automation (a Codex run, a scheduled agent, whatever you have) reads your recent traces and your merged PRs, looks for failure modes that keep recurring, drafts a candidate principle, and links it to the playbook step where it would have fired. You sign off on it or you don't. The plugin learns from the team it's working alongside.
+
+I find that really powerful as an abstraction. The slot's already there for it — you don't have to rewrite the orchestrator or any playbook prose, you just add the principle and reference it from the step. And because modern agent harnesses can run analysis across many threads at once, the loop is genuinely tractable rather than a thought experiment.
+
+I think this is where skill orchestrations are going. The earliest versions (superpowers, Matt's library, pstack) were already a step change, and I think the next thing is this stuff starting to learn from itself.
+
+## How it's been going for me
+
+I've been using pstack for two days. I think I've opened maybe twelve PRs through it. Every one of them was somewhere between three and two hundred lines of code, mostly bug fixes and refactorings. They were all targeted, well-documented, and easy for me to reason through. It's been a real velocity enabler without dragging up my cognitive debt — which is the trade I keep failing to find anywhere else.
+
+If you spend any time in this space, it's worth installing and trying for a week. And if you've been following along on the skill-orchestration thread (superpowers, Matt's library, now pstack), the thing I keep coming back to is that the shape is starting to look the same across all of them. That's the part I find genuinely exciting.

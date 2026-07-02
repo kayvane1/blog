@@ -7,6 +7,7 @@ import { FsmHero } from "../components/heroes/FsmHero";
 import { GenericSystemHero } from "../components/heroes/GenericSystemHero";
 import { PagedKvHero } from "../components/heroes/PagedKvHero";
 import { SingleflightHero } from "../components/heroes/SingleflightHero";
+import { SkillStackHero } from "../components/heroes/SkillStackHero";
 import { TldrHero } from "../components/heroes/TldrHero";
 import { TraceWaterfallHero } from "../components/heroes/TraceWaterfallHero";
 import type { HeroProps } from "../components/heroes/types";
@@ -25,6 +26,10 @@ export type Chapter = {
 };
 
 const CHAPTERS: Record<string, Chapter> = {
+  "building-a-multi-skill-system": {
+    accent: "oklch(0.78 0.15 325)",
+    Hero: SkillStackHero,
+  },
   "multi-level-caching-on-modal": {
     accent: "oklch(0.85 0.13 210)",
     Hero: SingleflightHero,
