@@ -250,8 +250,8 @@ function IntroPanel({
       <motion.div
         className={
           reduced
-            ? "relative flex min-h-screen flex-col justify-center overflow-hidden"
-            : "sticky top-0 flex h-screen flex-col justify-center overflow-hidden"
+            ? "relative flex min-h-dvh flex-col justify-center overflow-hidden"
+            : "sticky top-0 flex h-dvh flex-col justify-center overflow-hidden"
         }
         style={{
           backgroundColor: "var(--ink)",
@@ -368,8 +368,8 @@ function ChapterSection({
         ref={panelRef}
         className={
           reduced
-            ? "relative min-h-screen overflow-hidden"
-            : "sticky top-0 h-screen overflow-hidden"
+            ? "relative flex min-h-dvh flex-col overflow-hidden md:block"
+            : "sticky top-0 flex h-dvh flex-col overflow-hidden md:block"
         }
         style={{
           backgroundColor: "var(--ink)",
@@ -391,14 +391,8 @@ function ChapterSection({
           style={{ zIndex: 2 }}
         />
 
-        {/* the system, running — column is disjoint from the text column so
-            no title length or viewport size can collide with the scene */}
-        <div className="pointer-events-none absolute inset-x-0 top-[10vh] h-[42vh] md:inset-y-0 md:left-auto md:right-0 md:h-full md:w-[50%] xl:w-[54%] lg:pr-24 max-md:[mask-image:linear-gradient(to_bottom,black_55%,transparent_92%)]">
-          <Hero progress={playback} active={playing} accent={accent} reduced={reduced} />
-        </div>
-
         {/* chapter meta */}
-        <div className="absolute inset-x-0 top-0 flex items-baseline justify-between px-6 pt-16 md:px-14 md:pt-20">
+        <div className="relative flex items-baseline justify-between px-6 pt-16 md:absolute md:inset-x-0 md:top-0 md:px-14 md:pt-20">
           <span className="meta-label" style={{ color: accent }}>
             {String(index + 1).padStart(2, "0")} / {String(total).padStart(2, "0")}
           </span>
@@ -407,8 +401,16 @@ function ChapterSection({
           </span>
         </div>
 
+        {/* the system, running. Mobile: a flex row that takes every pixel the
+            text below doesn't need — no masks, nothing cropped. Desktop: an
+            absolute column disjoint from the text column, so no title length
+            or viewport size can collide with the scene. */}
+        <div className="pointer-events-none relative min-h-0 flex-1 px-3 py-4 md:absolute md:inset-y-0 md:left-auto md:right-0 md:h-full md:w-[50%] md:p-0 xl:w-[54%] lg:pr-24">
+          <Hero progress={playback} active={playing} accent={accent} reduced={reduced} />
+        </div>
+
         {/* chapter content */}
-        <div className="absolute inset-x-0 bottom-0 px-6 pb-14 md:max-w-[48%] xl:max-w-[44%] md:px-14 md:pb-20">
+        <div className="relative px-6 pb-14 md:absolute md:inset-x-0 md:bottom-0 md:max-w-[48%] xl:max-w-[44%] md:px-14 md:pb-20">
           <h2
             id={titleId}
             className="display break-words"
@@ -482,7 +484,7 @@ function OutroPanel({
     <section
       ref={ref}
       aria-label="Index and contact"
-      className="relative flex min-h-screen flex-col justify-between gap-16 px-6 pb-10 pt-28 md:px-14"
+      className="relative flex min-h-dvh flex-col justify-between gap-16 px-6 pb-10 pt-28 md:px-14"
       style={{ zIndex, backgroundColor: "var(--ink)" }}
     >
       <div className="grid gap-16 md:grid-cols-[1fr_1.2fr]">
