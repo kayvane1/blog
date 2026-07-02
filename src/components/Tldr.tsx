@@ -16,11 +16,20 @@ type TldrProps = {
  */
 export function Tldr({ children }: TldrProps) {
   return (
-    <aside className="not-prose relative my-6 grid grid-cols-[auto_minmax(0,1fr)] items-start gap-3 rounded-3xl border border-black/10 bg-[color:var(--paper-bright)] px-5 py-4 shadow-[0_18px_45px_-35px_rgba(20,20,19,0.35)] md:gap-4 max-md:grid-cols-1">
-      <span className="inline-flex items-center rounded-full border border-black/10 bg-black/5 px-2.5 py-0.5 font-mono text-[11px] uppercase tracking-[0.22em] text-[color:var(--ink)]">
+    <aside
+      className="not-prose my-8 grid grid-cols-[auto_minmax(0,1fr)] items-start gap-4 rounded-xl px-5 py-4 max-md:grid-cols-1"
+      style={{ background: "color-mix(in oklab, var(--page-ink) 5%, transparent)" }}
+    >
+      <span
+        className="meta-label mt-0.5 inline-flex items-center"
+        style={{ color: "var(--accent-deep)" }}
+      >
         TL;DR
       </span>
-      <p className="m-0 text-[15px] leading-relaxed text-[color:var(--ink)]">{children}</p>
+      {/* div, not p: MDX may already wrap the children in a paragraph */}
+      <div className="text-[15px] leading-relaxed text-[color:var(--page-ink)] [&>p]:m-0">
+        {children}
+      </div>
     </aside>
   );
 }

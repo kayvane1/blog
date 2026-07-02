@@ -1,18 +1,32 @@
 @import "tailwindcss";
 
+/*
+ * Two surfaces, one voice:
+ *  - The deck (homepage): dark ink, per-chapter accent, kinetic schematics.
+ *  - The reader (post pages): quiet off-white, same type system, post accent
+ *    carried through links and rules.
+ *
+ * Per-chapter color arrives via a scoped `--accent` custom property set
+ * inline by the route; everything downstream derives from it with color-mix.
+ */
+
 :root {
-  color-scheme: light;
-  --paper: #f6f3ec;
-  --paper-bright: #fbfaf7;
-  --ink: #141413;
-  --ink-muted: #4c4a45;
-  --accent: #0f766e;
-  --grid: rgba(20, 20, 19, 0.08);
-  --ring: rgba(15, 118, 110, 0.18);
-  --font-sans: "Space Grotesk", "Helvetica Neue", Arial, sans-serif;
-  --font-mono:
-    "IBM Plex Mono", "SFMono-Regular", Menlo, Monaco, Consolas, "Liberation Mono", "Courier New",
-    monospace;
+  --ink: oklch(0.145 0.02 265); /* deck surface */
+  --ink-raise: oklch(0.19 0.022 265); /* raised panels on deck */
+  --ghost: oklch(0.96 0.005 265); /* text on deck */
+  --page: oklch(0.97 0 0); /* reader surface, chroma 0 */
+  --page-ink: oklch(0.22 0.012 265); /* text on reader */
+  --page-dim: oklch(0.42 0.012 265); /* secondary text on reader */
+  --ink-muted: var(
+    --page-dim
+  ); /* legacy alias: post-bundle components use it as muted text on white */
+  --accent: oklch(0.85 0.14 210); /* per-chapter override */
+  --accent-deep: color-mix(in oklab, var(--accent) 52%, black); /* accent usable on light */
+  --font-sans: "Archivo", "Helvetica Neue", Arial, sans-serif;
+  --font-mono: "Fragment Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+
+  /* z scale: pinned chapters occupy 1..n, chrome sits above */
+  --z-chrome: 40;
 }
 
 * {
@@ -22,16 +36,8 @@
 body {
   margin: 0;
   font-family: var(--font-sans);
-  color: var(--ink);
-  background-color: var(--paper);
-  background-image:
-    linear-gradient(var(--grid) 1px, transparent 1px),
-    linear-gradient(90deg, var(--grid) 1px, transparent 1px),
-    radial-gradient(circle at 15% 15%, rgba(255, 255, 255, 0.7), transparent 55%);
-  background-size:
-    28px 28px,
-    28px 28px,
-    100% 100%;
+  color: var(--page-ink);
+  background-color: var(--page);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
@@ -40,131 +46,188 @@ a {
   color: inherit;
 }
 
-/* Hide native search clear button to avoid double clear icons. */
-input[type="search"]::-webkit-search-cancel-button,
-input[type="search"]::-webkit-search-decoration {
-  -webkit-appearance: none;
-  appearance: none;
-}
-
-input[type="search"]::-ms-clear,
-input[type="search"]::-ms-reveal {
-  display: none;
-  width: 0;
-  height: 0;
-}
-
 .font-mono {
   font-family: var(--font-mono);
 }
 
-.paper-card {
-  @apply rounded-3xl border border-black/5 bg-white/80 shadow-[0_20px_50px_-40px_rgba(15,118,110,0.35)];
+/* Poster voice for chapter titles: expanded Archivo, tight leading. */
+.display {
+  font-family: var(--font-sans);
+  font-stretch: 115%;
+  font-weight: 860;
+  line-height: 0.98;
+  letter-spacing: -0.015em;
+  text-wrap: balance;
 }
 
+.meta-label {
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+}
+
+/* Theme-agnostic tag chip: derives from currentColor on both surfaces. */
 .tech-pill {
-  @apply inline-flex items-center gap-1 rounded-full border border-black/10 bg-white px-3 py-1 text-[11px] uppercase tracking-[0.22em] text-[color:var(--ink-muted)];
-}
-
-.post-pill {
-  @apply inline-flex h-5 items-center gap-1 rounded-sm border border-black/10 bg-white px-2.5 text-[10px] uppercase leading-none tracking-[0.2em] text-[color:var(--ink-muted)];
-}
-
-.signal {
-  @apply inline-flex items-center gap-2 rounded-full border border-black/10 bg-white/70 px-3 py-1 text-[11px] uppercase tracking-[0.2em] text-[color:var(--ink-muted)];
+  display: inline-flex;
+  align-items: center;
+  padding: 0.2rem 0.65rem;
+  border: 1px solid color-mix(in oklab, currentColor 28%, transparent);
+  border-radius: 999px;
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: color-mix(in oklab, currentColor 82%, transparent);
+  white-space: nowrap;
 }
 
 .link-arrow {
-  @apply inline-flex items-center gap-2 text-[13px] font-semibold uppercase tracking-[0.2em];
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
 }
 
-.post-card-title,
-.post-card-summary {
-  overflow: hidden;
-}
-
-@media (min-width: 768px) {
-  .post-card-title {
-    min-height: 3.5rem;
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-  }
-
-  .post-card-summary {
-    min-height: 4.5rem;
-    display: -webkit-box;
-    -webkit-line-clamp: 3;
-    -webkit-box-orient: vertical;
-  }
-}
+/* ---------- Reader (post pages) ---------- */
 
 .post-content {
-  @apply text-[15px] leading-7 text-[color:var(--ink-muted)];
+  font-size: 1rem;
+  line-height: 1.75;
+  color: var(--page-ink);
+  max-width: 68ch;
+  text-wrap: pretty;
 }
 
 .post-content hr {
-  margin: 1.75rem 0;
+  margin: 2.5rem 0;
   border: none;
-  border-top: 1px solid rgba(20, 20, 19, 0.08);
+  border-top: 1px solid color-mix(in oklab, var(--page-ink) 12%, transparent);
 }
 
 .post-content h2 {
-  @apply mt-10 text-2xl font-semibold text-[color:var(--ink)];
+  margin-top: 3rem;
+  font-size: 1.6rem;
+  font-stretch: 110%;
+  font-weight: 800;
+  line-height: 1.15;
+  letter-spacing: -0.01em;
+  text-wrap: balance;
+  color: var(--page-ink);
 }
 
 .post-content h3 {
-  @apply mt-8 text-xl font-semibold text-[color:var(--ink)];
+  margin-top: 2.25rem;
+  font-size: 1.2rem;
+  font-stretch: 108%;
+  font-weight: 750;
+  line-height: 1.2;
+  color: var(--page-ink);
 }
 
 .post-content p {
-  @apply mt-4;
+  margin-top: 1.1rem;
 }
 
 .post-content a {
-  @apply underline decoration-black/20 underline-offset-4 transition hover:decoration-[color:var(--accent)];
+  color: var(--accent-deep);
+  text-decoration: underline;
+  text-decoration-color: color-mix(in oklab, var(--accent-deep) 45%, transparent);
+  text-underline-offset: 4px;
+  transition: text-decoration-color 160ms ease-out;
+}
+
+.post-content a:hover {
+  text-decoration-color: var(--accent-deep);
 }
 
 .post-content ul,
 .post-content ol {
-  @apply mt-4 space-y-2 pl-5;
+  margin-top: 1.1rem;
+  padding-left: 1.4rem;
+}
+
+.post-content li {
+  margin-top: 0.4rem;
 }
 
 .post-content ul > li {
-  @apply list-disc;
+  list-style: disc;
 }
 
 .post-content ol > li {
-  @apply list-decimal;
+  list-style: decimal;
+}
+
+.post-content li::marker {
+  color: var(--accent-deep);
 }
 
 .post-content table {
-  @apply mt-6 w-full border-collapse text-[13px];
+  margin-top: 1.75rem;
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+  line-height: 1.5;
 }
 
 .post-content th,
 .post-content td {
-  @apply border border-black/10 px-3 py-2 text-left;
+  border: 1px solid color-mix(in oklab, var(--page-ink) 14%, transparent);
+  padding: 0.55rem 0.8rem;
+  text-align: left;
 }
 
 .post-content th {
-  @apply bg-black/5 font-semibold text-[color:var(--ink)];
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  font-weight: 400;
+  background: color-mix(in oklab, var(--page-ink) 5%, transparent);
 }
 
 .post-content pre {
-  @apply mt-6 overflow-x-auto rounded-2xl bg-[#0e0f11] p-5 text-[13px] text-slate-100;
+  margin-top: 1.75rem;
+  overflow-x: auto;
+  border-radius: 0.75rem;
+  background: var(--ink);
+  padding: 1.25rem 1.4rem;
+  font-size: 0.8125rem;
+  line-height: 1.65;
+  color: var(--ghost);
 }
 
 .post-content blockquote {
-  @apply mt-6 border-l-2 border-[color:var(--accent)] pl-4 italic text-[color:var(--ink-muted)];
+  margin: 1.75rem 0 0;
+  padding-left: 1.2rem;
+  border-left: 1px solid var(--accent-deep);
+  color: var(--page-dim);
 }
 
 .post-content code {
-  @apply rounded bg-black/5 px-2 py-0.5 text-[13px] text-[color:var(--ink)];
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+  background: color-mix(in oklab, var(--page-ink) 7%, transparent);
+  border-radius: 4px;
+  padding: 0.1rem 0.35rem;
 }
 
 .post-content pre code {
-  @apply bg-transparent p-0 text-slate-100;
+  background: transparent;
+  padding: 0;
+  font-size: inherit;
+}
+
+.post-content img {
+  max-width: 100%;
+  height: auto;
+  margin-top: 1.75rem;
+  border-radius: 0.5rem;
+  border: 1px solid color-mix(in oklab, var(--page-ink) 10%, transparent);
 }
 
 /* ---------- Keyframes ---------- */
