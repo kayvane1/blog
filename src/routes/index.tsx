@@ -391,8 +391,9 @@ function ChapterSection({
           style={{ zIndex: 2 }}
         />
 
-        {/* the system, running */}
-        <div className="pointer-events-none absolute inset-x-0 top-[10vh] h-[42vh] md:inset-y-0 md:left-auto md:right-0 md:h-full md:w-[62%] md:max-lg:w-[55%] lg:pr-24 max-md:[mask-image:linear-gradient(to_bottom,black_72%,transparent)]">
+        {/* the system, running — column is disjoint from the text column so
+            no title length or viewport size can collide with the scene */}
+        <div className="pointer-events-none absolute inset-x-0 top-[10vh] h-[42vh] md:inset-y-0 md:left-auto md:right-0 md:h-full md:w-[50%] xl:w-[54%] lg:pr-24 max-md:[mask-image:linear-gradient(to_bottom,black_55%,transparent_92%)]">
           <Hero progress={playback} active={playing} accent={accent} reduced={reduced} />
         </div>
 
@@ -407,11 +408,11 @@ function ChapterSection({
         </div>
 
         {/* chapter content */}
-        <div className="absolute inset-x-0 bottom-0 px-6 pb-14 md:max-w-[62%] md:px-14 md:pb-20">
+        <div className="absolute inset-x-0 bottom-0 px-6 pb-14 md:max-w-[48%] xl:max-w-[44%] md:px-14 md:pb-20">
           <h2
             id={titleId}
             className="display break-words"
-            style={{ fontSize: "clamp(1.85rem, 0.9rem + 4.1vw, 4.3rem)" }}
+            style={{ fontSize: "clamp(1.85rem, 0.7rem + 3.3vw, 3.9rem)" }}
           >
             <Link
               to="/posts/$slug"
