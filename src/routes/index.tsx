@@ -1,7 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Link, createFileRoute } from "@tanstack/react-router";
 import {
+  animate,
   motion,
+  useInView,
   useMotionValue,
   useMotionValueEvent,
   useReducedMotion,
@@ -73,12 +75,17 @@ export const Route = createFileRoute("/")({
 
 /**
  * The deck: one full-viewport chapter per post. Each chapter pins for
- * WRAPPER_VH − 100vh of scroll; the first SCENE_END of that scrubs the
- * chapter's hero schematic, the rest is the next chapter sliding over
- * (wrappers overlap via −100vh bottom margin, z-index ascending).
+ * WRAPPER_VH − 100vh of scroll; the last 100vh of that is the next chapter
+ * sliding over (wrappers overlap via −100vh bottom margin, z-index
+ * ascending). The hero schematic is NOT scroll-scrubbed: it autoplays as a
+ * PLAY_SECONDS timeline once the panel is half in view, holds its end state
+ * while covered, and rewinds when it leaves the viewport so a return visit
+ * replays it.
  */
-const WRAPPER_VH = 320;
-const SCENE_END = 0.55;
+const WRAPPER_VH = 280;
+const PLAY_SECONDS = 5;
+/** Wrapper progress at which the next chapter starts covering this one. */
+const EXIT_START = 1 - 100 / (WRAPPER_VH - 100);
 
 function Home() {
   const posts = getAllPosts();
@@ -116,7 +123,6 @@ function Home() {
           index={index}
           total={posts.length}
           reduced={reduced}
-          active={activeIndex === index}
           onActive={onActive}
         />
       ))}
@@ -306,27 +312,39 @@ function ChapterSection({
   index,
   total,
   reduced,
-  active,
   onActive,
 }: {
   post: PostMeta;
   index: number;
   total: number;
   reduced: boolean;
-  active: boolean;
   onActive: (index: number) => void;
 }) {
   const { accent, Hero } = getChapter(post.slug);
   const ref = useRef<HTMLElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
   const { scrollYProgress } = useScroll({
     target: ref,
     offset: reduced ? ["start end", "end start"] : ["start start", "end end"],
   });
-  const sceneProgress = useTransform(scrollYProgress, [0, SCENE_END], [0, 1]);
-  const staticProgress = useMotionValue(1);
-  const exitScale = useTransform(scrollYProgress, [SCENE_END, 1], [1, 0.94]);
-  const exitDim = useTransform(scrollYProgress, [SCENE_END, 1], [1, 0.45]);
-  const exitRadius = useTransform(scrollYProgress, [SCENE_END, 1], [0, 28]);
+  const exitScale = useTransform(scrollYProgress, [EXIT_START, 1], [1, 0.94]);
+  const exitDim = useTransform(scrollYProgress, [EXIT_START, 1], [1, 0.45]);
+  const exitRadius = useTransform(scrollYProgress, [EXIT_START, 1], [0, 28]);
+
+  // Autoplay: run the hero's timeline once the panel is half in view. A
+  // covered panel still intersects the viewport, so it holds its end state;
+  // only scrolling far enough for the panel to leave the screen rewinds it.
+  const playback = useMotionValue(reduced ? 1 : 0);
+  const playing = useInView(panelRef, { amount: 0.5 }) && !reduced;
+  useEffect(() => {
+    if (reduced) return;
+    if (!playing) {
+      playback.set(0);
+      return;
+    }
+    const controls = animate(playback, 1, { duration: PLAY_SECONDS, ease: "linear" });
+    return () => controls.stop();
+  }, [playing, reduced, playback]);
 
   useMotionValueEvent(scrollYProgress, "change", (v) => {
     if (reduced ? v > 0.35 && v < 0.65 : v > 0.001 && v < 0.999) onActive(index);
@@ -347,6 +365,7 @@ function ChapterSection({
       }
     >
       <motion.div
+        ref={panelRef}
         className={
           reduced
             ? "relative min-h-screen overflow-hidden"
@@ -374,12 +393,7 @@ function ChapterSection({
 
         {/* the system, running */}
         <div className="pointer-events-none absolute inset-x-0 top-[10vh] h-[42vh] md:inset-y-0 md:left-auto md:right-0 md:h-full md:w-[62%] md:max-lg:w-[55%] lg:pr-24 max-md:[mask-image:linear-gradient(to_bottom,black_72%,transparent)]">
-          <Hero
-            progress={reduced ? staticProgress : sceneProgress}
-            active={active}
-            accent={accent}
-            reduced={reduced}
-          />
+          <Hero progress={playback} active={playing} accent={accent} reduced={reduced} />
         </div>
 
         {/* chapter meta */}
@@ -396,13 +410,14 @@ function ChapterSection({
         <div className="absolute inset-x-0 bottom-0 px-6 pb-14 md:max-w-[62%] md:px-14 md:pb-20">
           <h2
             id={titleId}
-            className="display"
-            style={{ fontSize: "clamp(2rem, 0.9rem + 4.1vw, 4.3rem)" }}
+            className="display break-words"
+            style={{ fontSize: "clamp(1.85rem, 0.9rem + 4.1vw, 4.3rem)" }}
           >
             <Link
               to="/posts/$slug"
               params={{ slug: post.slug }}
-              className="focus-visible:outline-none"
+              className="focus-visible:outline-2 focus-visible:outline-offset-8"
+              style={{ outlineColor: accent }}
             >
               {post.title}
               {/* stretched link: the whole panel opens the post */}
@@ -432,12 +447,12 @@ function ChapterSection({
           </div>
         </div>
 
-        {/* scrub progress */}
+        {/* playback progress */}
         {reduced ? null : (
           <motion.div
             aria-hidden
             className="absolute bottom-0 left-0 h-0.5 w-full origin-left"
-            style={{ backgroundColor: accent, scaleX: sceneProgress, opacity: 0.85 }}
+            style={{ backgroundColor: accent, scaleX: playback, opacity: 0.85 }}
           />
         )}
       </motion.div>

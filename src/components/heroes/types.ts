@@ -4,11 +4,14 @@ import type { MotionValue } from "framer-motion";
  * Contract for a chapter hero: the full-viewport schematic animation behind a
  * post's panel on the homepage deck.
  *
- * - `progress` is the scrubbed narrative position, 0 → 1, driven by scroll
- *   through the chapter. Derive every narrative beat from it with
- *   `useTransform` so scrolling backwards replays in reverse.
- * - `active` is true while the chapter is the front pinned panel. Gate idle
- *   loops (pulses, blinking cursors) on it so off-screen scenes cost nothing.
+ * - `progress` is the narrative timeline, 0 → 1. It autoplays over a few
+ *   seconds once the chapter panel enters the viewport, holds at 1 while the
+ *   panel stays on screen, and rewinds to 0 when it leaves (so returning
+ *   replays it). Derive every narrative beat from it with `useTransform`;
+ *   never assume it only moves forward.
+ * - `active` is true while the chapter panel is at least half in view. Gate
+ *   idle loops (pulses, blinking cursors) on it so off-screen scenes cost
+ *   nothing.
  * - `accent` is the chapter's oklch color string. Structure lines use dim
  *   ghost strokes; only the "live" elements of the system get the accent.
  * - `reduced` mirrors prefers-reduced-motion: render the resolved end state

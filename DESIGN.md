@@ -6,9 +6,10 @@ and typographic. See PRODUCT.md for the strategy behind this split.
 
 ## Core concept
 
-Every article is a system; its homepage preview is that system *running*.
-Each post gets a full-viewport pinned chapter whose scroll position scrubs a
-bespoke SVG schematic (a "hero") teaching the post's core idea. Heroes live in
+Every article is a system; its homepage preview is that system _running_.
+Each post gets a full-viewport pinned chapter; when it scrolls into view, a
+bespoke SVG schematic (a "hero") autoplays and teaches the post's core idea.
+Heroes live in
 `src/components/heroes/`, one file per post, registered in
 `src/lib/chapters.ts`, and obey the contract in
 `src/components/heroes/types.ts`.
@@ -17,15 +18,15 @@ bespoke SVG schematic (a "hero") teaching the post's core idea. Heroes live in
 
 Tokens in `src/styles.css`, OKLCH throughout.
 
-| Token | Value | Role |
-|---|---|---|
-| `--ink` | `oklch(0.145 0.02 265)` | deck surface (blue-cast near-black) |
-| `--ghost` | `oklch(0.96 0.005 265)` | text on deck |
-| `--page` | `oklch(0.97 0 0)` | reader surface (true off-white, chroma 0) |
-| `--page-ink` | `oklch(0.22 0.012 265)` | reader text |
-| `--page-dim` | `oklch(0.42 0.012 265)` | reader secondary text |
-| `--accent` | per chapter | scoped inline per panel / post |
-| `--accent-deep` | `color-mix(52% accent, black)` | accent usable on light ground |
+| Token           | Value                          | Role                                      |
+| --------------- | ------------------------------ | ----------------------------------------- |
+| `--ink`         | `oklch(0.145 0.02 265)`        | deck surface (blue-cast near-black)       |
+| `--ghost`       | `oklch(0.96 0.005 265)`        | text on deck                              |
+| `--page`        | `oklch(0.97 0 0)`              | reader surface (true off-white, chroma 0) |
+| `--page-ink`    | `oklch(0.22 0.012 265)`        | reader text                               |
+| `--page-dim`    | `oklch(0.42 0.012 265)`        | reader secondary text                     |
+| `--accent`      | per chapter                    | scoped inline per panel / post            |
+| `--accent-deep` | `color-mix(52% accent, black)` | accent usable on light ground             |
 
 Per-chapter accents (full-palette strategy — the accent is the chapter's
 identity; structure stays ghost):
@@ -54,11 +55,14 @@ generic pipeline hero) is a placeholder, not a destination.
 
 ## Motion
 
-- Scroll is the timeline: heroes derive every beat from a scrubbed `progress`
-  MotionValue (framer-motion `useScroll` + `useTransform`); scrolling back
-  replays in reverse. No scroll hijacking, no snap.
-- Chapter mechanics: 320vh wrapper, sticky 100vh panel, −100vh overlap; the
-  next chapter covers the previous (which scales to 0.94, dims, gains radius).
+- Arrival is the trigger: each hero autoplays a ~5s linear timeline (a
+  `progress` MotionValue tweened 0 → 1) once its panel is half in view, holds
+  its end state while on screen, and rewinds when the panel leaves so a
+  return visit replays it. Heroes derive every beat from `progress` via
+  `useTransform`. No scroll hijacking, no snap.
+- Chapter mechanics: 280vh wrapper, sticky 100vh panel, −100vh overlap; the
+  next chapter covers the previous (which scales to 0.94, dims, gains radius)
+  — the cover transition stays scroll-driven.
 - Idle loops (pulses, wobbles) are subtle, ≥2s, and gated on
   `active && !reduced`.
 - Hero SVG language: `GHOST_STROKE` 1.5px structure, accent 2px live elements,
