@@ -1,12 +1,19 @@
-import { useMemo, useState } from "react";
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { motion, MotionConfig } from "framer-motion";
-import { ArrowUpRight, Github, Linkedin, Mail, Search, X } from "lucide-react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { Link, createFileRoute } from "@tanstack/react-router";
+import {
+  motion,
+  useMotionValue,
+  useMotionValueEvent,
+  useReducedMotion,
+  useScroll,
+  useTransform,
+} from "framer-motion";
+import { ArrowUpRight } from "lucide-react";
 
 import { TagPill } from "../components/TagPill";
+import { getChapter } from "../lib/chapters";
 import { getAllPosts, type PostMeta } from "../lib/posts";
 import { SITE, absoluteUrl } from "../lib/site";
-import { Tag } from "../lib/tags";
 
 export const Route = createFileRoute("/")({
   head: () => {
@@ -64,236 +71,478 @@ export const Route = createFileRoute("/")({
   component: Home,
 });
 
-const containerVariants = {
-  hidden: { opacity: 0, y: 12 },
-  show: {
-    opacity: 1,
-    y: 0,
-    transition: { staggerChildren: 0.12 },
-  },
-};
-
-const itemVariants = {
-  hidden: { opacity: 0, y: 14 },
-  show: { opacity: 1, y: 0 },
-};
-
-const focusAreas = [Tag.Observability, Tag.MLSystems, Tag.Infra, Tag.Tooling];
-
-const socialIcons: Record<string, (props: { className?: string }) => JSX.Element> = {
-  GitHub: Github,
-  LinkedIn: Linkedin,
-  X,
-  Email: Mail,
-};
+/**
+ * The deck: one full-viewport chapter per post. Each chapter pins for
+ * WRAPPER_VH − 100vh of scroll; the first SCENE_END of that scrubs the
+ * chapter's hero schematic, the rest is the next chapter sliding over
+ * (wrappers overlap via −100vh bottom margin, z-index ascending).
+ */
+const WRAPPER_VH = 320;
+const SCENE_END = 0.55;
 
 function Home() {
   const posts = getAllPosts();
-  const [query, setQuery] = useState("");
+  const reduced = useReducedMotion() ?? false;
+  // −1 = intro; 0..n−1 = chapters
+  const [activeIndex, setActiveIndex] = useState(-1);
+  const onActive = useCallback((index: number) => setActiveIndex(index), []);
 
-  const trimmedQuery = query.trim();
-  const normalizedQuery = trimmedQuery.toLowerCase();
-  const filteredPosts = useMemo(() => {
-    if (!normalizedQuery) return posts;
-    const tokens = normalizedQuery.split(/\s+/);
-    return posts.filter((post) => {
-      const haystack = [post.title, post.summary, post.tags.join(" ")].join(" ").toLowerCase();
-      return tokens.every((token) => haystack.includes(token));
-    });
-  }, [normalizedQuery, posts]);
-  const entryLabel = normalizedQuery
-    ? `${filteredPosts.length} of ${posts.length} entries`
-    : `${posts.length} entries`;
+  // Overscroll / scrollbar gutter should be ink on the deck, not reader-white.
+  useEffect(() => {
+    const root = document.documentElement;
+    const prev = root.style.backgroundColor;
+    root.style.backgroundColor = "var(--ink)";
+    return () => {
+      root.style.backgroundColor = prev;
+    };
+  }, []);
 
   return (
-    <MotionConfig transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}>
-      <main className="min-h-screen px-6 pb-20 pt-12">
-        <div className="mx-auto flex max-w-6xl flex-col gap-12">
-          <header className="paper-card relative overflow-hidden px-6 py-10 md:px-12">
-            <div className="absolute inset-0 bg-gradient-to-br from-white via-white to-emerald-50/60" />
-            <div className="relative">
-              <div className="grid gap-6 lg:grid-cols-[1.2fr_0.8fr] lg:items-end">
-                <div>
-                  <h1 className="text-4xl font-semibold tracking-tight md:text-5xl">{SITE.name}</h1>
-                  <p className="mt-3 text-lg text-[color:var(--ink-muted)]">{SITE.intro}</p>
-                </div>
-                <div className="flex flex-col gap-4 text-sm">
-                  <a
-                    className="group link-arrow"
-                    href={SITE.githubRepo}
-                    target="_blank"
-                    rel="noreferrer"
-                  >
-                    blog repo
-                    <ArrowUpRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
-                  </a>
-                  <div className="flex flex-wrap gap-3 text-sm">
-                    {SITE.socials.map((social) => {
-                      const Icon = socialIcons[social.label] ?? ArrowUpRight;
-                      return (
-                        <a
-                          key={social.label}
-                          className="group flex items-center gap-2 rounded-full border border-black/10 bg-white/70 px-3 py-1 font-mono text-[11px] uppercase tracking-[0.18em] text-[color:var(--ink-muted)] transition hover:border-emerald-500/40 hover:text-[color:var(--ink)]"
-                          href={social.href}
-                          target="_blank"
-                          rel="noreferrer"
-                        >
-                          <Icon className="h-3.5 w-3.5" />
-                          {social.label}
-                        </a>
-                      );
-                    })}
-                  </div>
-                </div>
-              </div>
-              <div className="mt-8 flex flex-wrap gap-2">
-                {focusAreas.map((area) => (
-                  <TagPill key={area}>{area}</TagPill>
-                ))}
-              </div>
-            </div>
-          </header>
+    <main id="top" className="bg-[color:var(--ink)] text-[color:var(--ghost)]">
+      <DeckHeader />
+      <ChapterRail posts={posts} activeIndex={activeIndex} reduced={reduced} />
 
-          <section>
-            <div className="flex flex-wrap items-center justify-between gap-4">
-              <div>
-                <p className="font-mono text-xs uppercase tracking-[0.2em] text-[color:var(--ink-muted)]">
-                  latest posts
-                </p>
-                <h2 className="mt-2 text-2xl font-semibold">Writing</h2>
-              </div>
-              <div className="signal">{entryLabel}</div>
-            </div>
-            <div className="mt-6 flex flex-wrap items-center gap-3">
-              <label className="sr-only" htmlFor="post-search">
-                Search posts
-              </label>
-              <div className="relative w-full md:max-w-md">
-                <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-[color:var(--ink-muted)]" />
-                <input
-                  id="post-search"
-                  type="search"
-                  value={query}
-                  onChange={(event) => setQuery(event.target.value)}
-                  placeholder="Search by title, snippet, or tags"
-                  className="w-full rounded-2xl border border-black/10 bg-white/80 py-3 pl-11 pr-11 text-sm text-[color:var(--ink)] shadow-[0_18px_45px_-40px_rgba(15,118,110,0.45)] transition focus:border-emerald-500/40 focus:outline-none focus:ring-2 focus:ring-[color:var(--ring)]"
-                />
-                {query ? (
-                  <button
-                    type="button"
-                    aria-label="Clear search"
-                    onClick={() => setQuery("")}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full p-1 text-[color:var(--ink-muted)] transition hover:text-[color:var(--ink)]"
-                  >
-                    <X className="h-4 w-4" />
-                  </button>
-                ) : null}
-              </div>
-              {normalizedQuery ? <TagPill>filtering: {trimmedQuery}</TagPill> : null}
-            </div>
-            <motion.div
-              className="mt-6 grid gap-6 md:grid-cols-2"
-              variants={containerVariants}
-              initial="hidden"
-              animate="show"
-            >
-              {posts.length === 0 ? (
-                <div className="paper-card px-6 py-8 text-[color:var(--ink-muted)]">
-                  First note coming soon.
-                </div>
-              ) : filteredPosts.length === 0 ? (
-                <div className="paper-card px-6 py-8 text-[color:var(--ink-muted)]">
-                  No matches. Try a different search.
-                </div>
-              ) : null}
-              {filteredPosts.map((post) => (
-                <PostCard key={post.slug} post={post} />
-              ))}
-            </motion.div>
-          </section>
+      <IntroPanel
+        postCount={posts.length}
+        reduced={reduced}
+        active={activeIndex === -1}
+        onActive={onActive}
+      />
 
-          <footer className="flex flex-col gap-2 text-sm text-[color:var(--ink-muted)]">
-            <p>{SITE.description}</p>
-            <p className="self-end text-xs text-[color:var(--ink-muted)]">
-              Kayvane Shakerifar 2026
-            </p>
-          </footer>
-        </div>
-      </main>
-    </MotionConfig>
+      {posts.map((post, index) => (
+        <ChapterSection
+          key={post.slug}
+          post={post}
+          index={index}
+          total={posts.length}
+          reduced={reduced}
+          active={activeIndex === index}
+          onActive={onActive}
+        />
+      ))}
+
+      <OutroPanel posts={posts} zIndex={posts.length + 2} onActive={onActive} />
+    </main>
   );
 }
 
-function PostCard({ post }: { post: PostMeta }) {
-  const navigate = useNavigate();
+function DeckHeader() {
+  return (
+    <header
+      className="fixed inset-x-0 top-0 flex items-baseline justify-between px-6 py-5 md:px-14"
+      style={{ zIndex: "var(--z-chrome)" }}
+    >
+      <a href="#top" className="text-sm font-semibold tracking-tight">
+        Kayvane Shakerifar
+      </a>
+      <nav aria-label="Social links" className="flex items-baseline gap-4 md:gap-6">
+        {SITE.socials.map((social) => (
+          <a
+            key={social.label}
+            className="meta-label opacity-65 transition-opacity hover:opacity-100"
+            href={social.href}
+            target="_blank"
+            rel="noreferrer"
+          >
+            {social.label}
+          </a>
+        ))}
+      </nav>
+    </header>
+  );
+}
 
-  const goToPost = () => {
-    navigate({ to: "/posts/$slug", params: { slug: post.slug } });
-  };
+function ChapterRail({
+  posts,
+  activeIndex,
+  reduced,
+}: {
+  posts: PostMeta[];
+  activeIndex: number;
+  reduced: boolean;
+}) {
+  // Past the deck (outro in view) the rail has nothing to point at — fade it.
+  const pastDeck = activeIndex >= posts.length;
+  return (
+    <nav
+      aria-label="Chapters"
+      className={`fixed right-8 top-1/2 hidden -translate-y-1/2 flex-col items-end gap-3.5 transition-opacity duration-500 lg:flex ${pastDeck ? "pointer-events-none opacity-0" : "opacity-100"}`}
+      style={{ zIndex: "var(--z-chrome)" }}
+    >
+      {posts.map((post, i) => {
+        const { accent } = getChapter(post.slug);
+        const active = i === activeIndex;
+        return (
+          <a
+            key={post.slug}
+            href={`#ch-${post.slug}`}
+            title={post.title}
+            aria-label={`Chapter ${i + 1}: ${post.title}`}
+            aria-current={active ? "true" : undefined}
+            className="group flex items-center gap-2.5"
+            onClick={(event) => {
+              event.preventDefault();
+              document.getElementById(`ch-${post.slug}`)?.scrollIntoView({
+                behavior: reduced ? "auto" : "smooth",
+              });
+            }}
+          >
+            <span
+              className="meta-label transition-opacity duration-300"
+              style={{
+                color: active ? accent : "var(--ghost)",
+                opacity: active ? 1 : 0.4,
+              }}
+            >
+              {String(i + 1).padStart(2, "0")}
+            </span>
+            <span
+              className="h-px transition-all duration-300 group-hover:opacity-90"
+              style={{
+                width: active ? 30 : 14,
+                backgroundColor: active ? accent : "var(--ghost)",
+                opacity: active ? 1 : 0.35,
+              }}
+            />
+          </a>
+        );
+      })}
+    </nav>
+  );
+}
+
+function IntroPanel({
+  postCount,
+  reduced,
+  active,
+  onActive,
+}: {
+  postCount: number;
+  reduced: boolean;
+  active: boolean;
+  onActive: (index: number) => void;
+}) {
+  const ref = useRef<HTMLElement>(null);
+  const { scrollYProgress } = useScroll({
+    target: ref,
+    offset: reduced ? ["start end", "end start"] : ["start start", "end end"],
+  });
+  const dim = useTransform(scrollYProgress, [0, 1], [1, 0.3]);
+  const scale = useTransform(scrollYProgress, [0, 1], [1, 0.96]);
+
+  useMotionValueEvent(scrollYProgress, "change", (v) => {
+    if (reduced ? v > 0.35 && v < 0.65 : v > 0.001 && v < 0.999) onActive(-1);
+  });
 
   return (
-    <motion.article
-      variants={itemVariants}
-      whileHover={{ y: -6 }}
-      whileTap={{ scale: 0.99 }}
-      role="link"
-      tabIndex={0}
-      aria-label={`Read ${post.title}`}
-      onClick={goToPost}
-      onKeyDown={(event) => {
-        if (event.currentTarget !== event.target) return;
-        if (event.key === "Enter" || event.key === " ") {
-          event.preventDefault();
-          goToPost();
-        }
-      }}
-      className="group relative flex h-full cursor-pointer flex-col overflow-hidden rounded-3xl border border-black/5 bg-white/80 p-6 shadow-[0_18px_50px_-40px_rgba(15,118,110,0.4)] transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--ring)]"
+    <section
+      ref={ref}
+      aria-label="Introduction"
+      className="relative"
+      style={reduced ? { zIndex: 1 } : { height: "200vh", marginBottom: "-100vh", zIndex: 1 }}
     >
-      <div className="absolute inset-0 bg-gradient-to-br from-white via-white to-emerald-50/70 opacity-0 transition duration-300 group-hover:opacity-100" />
-      <div className="relative flex h-full flex-col gap-5">
-        <div className="flex items-center justify-between text-xs uppercase tracking-[0.2em] text-[color:var(--ink-muted)]">
-          <span className="font-mono">{formatDate(post.date)}</span>
-          <span className="font-mono">{post.readingTime}</span>
-        </div>
-        <div>
-          <h3 className="post-card-title text-xl font-semibold text-[color:var(--ink)]">
-            {post.title}
-          </h3>
-          <p className="post-card-summary mt-3 text-sm leading-6 text-[color:var(--ink-muted)]">
-            {post.summary}
+      <motion.div
+        className={
+          reduced
+            ? "relative flex min-h-screen flex-col justify-center overflow-hidden"
+            : "sticky top-0 flex h-screen flex-col justify-center overflow-hidden"
+        }
+        style={{
+          backgroundColor: "var(--ink)",
+          ...(reduced ? {} : { opacity: dim, scale }),
+        }}
+      >
+        {/* schematic dot field */}
+        <div
+          aria-hidden
+          className="absolute inset-0"
+          style={{
+            backgroundImage:
+              "radial-gradient(color-mix(in oklab, var(--ghost) 15%, transparent) 1px, transparent 1px)",
+            backgroundSize: "26px 26px",
+            maskImage: "radial-gradient(820px circle at 32% 44%, black, transparent 72%)",
+          }}
+        />
+
+        <div className="relative px-6 md:px-14">
+          <h1 className="display" style={{ fontSize: "clamp(2.9rem, 1.4rem + 6.5vw, 6rem)" }}>
+            Kayvane
+            <br />
+            Shakerifar
+          </h1>
+          <p
+            className="mt-6 max-w-[46ch] text-base leading-relaxed md:text-lg"
+            style={{ color: "color-mix(in oklab, var(--ghost) 75%, transparent)" }}
+          >
+            {SITE.description}
+          </p>
+          <p className="meta-label mt-10 opacity-65">
+            {postCount} articles · each preview is the system, running
           </p>
         </div>
-        <div className="post-card-tags flex flex-wrap gap-2">
-          {post.tags.map((tag) => (
-            <TagPill key={tag}>{tag}</TagPill>
-          ))}
-        </div>
-        <div className="mt-auto flex flex-wrap items-center justify-between gap-4 text-xs uppercase tracking-[0.2em] text-[color:var(--ink-muted)]">
-          <Link
-            className="link-arrow text-[color:var(--ink)]"
-            to="/posts/$slug"
-            params={{ slug: post.slug }}
-            onClick={(event) => event.stopPropagation()}
+
+        {/* scroll cue */}
+        <div className="absolute bottom-8 left-1/2 flex -translate-x-1/2 flex-col items-center gap-3">
+          <span className="meta-label opacity-65">scroll</span>
+          <div
+            className="h-12 w-px overflow-hidden"
+            style={{ backgroundColor: "color-mix(in oklab, var(--ghost) 20%, transparent)" }}
           >
-            read
-            <ArrowUpRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
-          </Link>
-          <div className="flex items-center gap-3 font-mono">
-            {post.github ? (
-              <a
-                className="hover:text-[color:var(--ink)]"
-                href={post.github}
-                target="_blank"
-                rel="noreferrer"
-                onClick={(event) => event.stopPropagation()}
-              >
-                github
-              </a>
-            ) : null}
+            <motion.div
+              className="h-full w-full"
+              style={{ backgroundColor: "var(--ghost)" }}
+              animate={active && !reduced ? { y: ["-100%", "100%"] } : { y: "-30%" }}
+              transition={{ duration: 2.1, repeat: Infinity, ease: [0.65, 0, 0.35, 1] }}
+            />
           </div>
         </div>
+      </motion.div>
+    </section>
+  );
+}
+
+function ChapterSection({
+  post,
+  index,
+  total,
+  reduced,
+  active,
+  onActive,
+}: {
+  post: PostMeta;
+  index: number;
+  total: number;
+  reduced: boolean;
+  active: boolean;
+  onActive: (index: number) => void;
+}) {
+  const { accent, Hero } = getChapter(post.slug);
+  const ref = useRef<HTMLElement>(null);
+  const { scrollYProgress } = useScroll({
+    target: ref,
+    offset: reduced ? ["start end", "end start"] : ["start start", "end end"],
+  });
+  const sceneProgress = useTransform(scrollYProgress, [0, SCENE_END], [0, 1]);
+  const staticProgress = useMotionValue(1);
+  const exitScale = useTransform(scrollYProgress, [SCENE_END, 1], [1, 0.94]);
+  const exitDim = useTransform(scrollYProgress, [SCENE_END, 1], [1, 0.45]);
+  const exitRadius = useTransform(scrollYProgress, [SCENE_END, 1], [0, 28]);
+
+  useMotionValueEvent(scrollYProgress, "change", (v) => {
+    if (reduced ? v > 0.35 && v < 0.65 : v > 0.001 && v < 0.999) onActive(index);
+  });
+
+  const titleId = `ch-title-${post.slug}`;
+
+  return (
+    <section
+      ref={ref}
+      id={`ch-${post.slug}`}
+      aria-labelledby={titleId}
+      className="relative"
+      style={
+        reduced
+          ? { zIndex: index + 2 }
+          : { height: `${WRAPPER_VH}vh`, marginBottom: "-100vh", zIndex: index + 2 }
+      }
+    >
+      <motion.div
+        className={
+          reduced
+            ? "relative min-h-screen overflow-hidden"
+            : "sticky top-0 h-screen overflow-hidden"
+        }
+        style={{
+          backgroundColor: "var(--ink)",
+          ...(reduced ? {} : { scale: exitScale, opacity: exitDim, borderRadius: exitRadius }),
+        }}
+      >
+        {/* accent field */}
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-0"
+          style={{
+            background: `radial-gradient(1100px circle at 72% 36%, color-mix(in oklab, ${accent} 9%, transparent), transparent 66%)`,
+          }}
+        />
+        {/* grounds the fixed header over the scene */}
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-[color:var(--ink)] to-transparent"
+          style={{ zIndex: 2 }}
+        />
+
+        {/* the system, running */}
+        <div className="pointer-events-none absolute inset-x-0 top-[10vh] h-[42vh] md:inset-y-0 md:left-auto md:right-0 md:h-full md:w-[62%] md:max-lg:w-[55%] lg:pr-24 max-md:[mask-image:linear-gradient(to_bottom,black_72%,transparent)]">
+          <Hero
+            progress={reduced ? staticProgress : sceneProgress}
+            active={active}
+            accent={accent}
+            reduced={reduced}
+          />
+        </div>
+
+        {/* chapter meta */}
+        <div className="absolute inset-x-0 top-0 flex items-baseline justify-between px-6 pt-16 md:px-14 md:pt-20">
+          <span className="meta-label" style={{ color: accent }}>
+            {String(index + 1).padStart(2, "0")} / {String(total).padStart(2, "0")}
+          </span>
+          <span className="meta-label opacity-65">
+            {formatDate(post.date)} · {post.readingTime}
+          </span>
+        </div>
+
+        {/* chapter content */}
+        <div className="absolute inset-x-0 bottom-0 px-6 pb-14 md:max-w-[62%] md:px-14 md:pb-20">
+          <h2
+            id={titleId}
+            className="display"
+            style={{ fontSize: "clamp(2rem, 0.9rem + 4.1vw, 4.3rem)" }}
+          >
+            <Link
+              to="/posts/$slug"
+              params={{ slug: post.slug }}
+              className="focus-visible:outline-none"
+            >
+              {post.title}
+              {/* stretched link: the whole panel opens the post */}
+              <span className="absolute inset-0" aria-hidden />
+            </Link>
+          </h2>
+          <p
+            className="mt-5 max-w-[52ch] text-[15px] leading-relaxed md:text-base"
+            style={{
+              color: "color-mix(in oklab, var(--ghost) 72%, transparent)",
+              display: "-webkit-box",
+              WebkitLineClamp: 3,
+              WebkitBoxOrient: "vertical",
+              overflow: "hidden",
+            }}
+          >
+            {post.summary}
+          </p>
+          <div className="mt-6 flex flex-wrap gap-2" style={{ color: accent }}>
+            {post.tags.map((tag) => (
+              <TagPill key={tag}>{tag}</TagPill>
+            ))}
+          </div>
+          <div className="link-arrow mt-8" style={{ color: accent }}>
+            read the post
+            <ArrowUpRight className="h-4 w-4" />
+          </div>
+        </div>
+
+        {/* scrub progress */}
+        {reduced ? null : (
+          <motion.div
+            aria-hidden
+            className="absolute bottom-0 left-0 h-0.5 w-full origin-left"
+            style={{ backgroundColor: accent, scaleX: sceneProgress, opacity: 0.85 }}
+          />
+        )}
+      </motion.div>
+    </section>
+  );
+}
+
+function OutroPanel({
+  posts,
+  zIndex,
+  onActive,
+}: {
+  posts: PostMeta[];
+  zIndex: number;
+  onActive: (index: number) => void;
+}) {
+  const ref = useRef<HTMLElement>(null);
+  const { scrollYProgress } = useScroll({ target: ref, offset: ["start 0.6", "end start"] });
+  useMotionValueEvent(scrollYProgress, "change", (v) => {
+    // Claim the active slot while the outro is in view (hides the rail);
+    // hand it back to the last chapter when scrolling back up.
+    onActive(v > 0.001 ? posts.length : posts.length - 1);
+  });
+
+  return (
+    <section
+      ref={ref}
+      aria-label="Index and contact"
+      className="relative flex min-h-screen flex-col justify-between gap-16 px-6 pb-10 pt-28 md:px-14"
+      style={{ zIndex, backgroundColor: "var(--ink)" }}
+    >
+      <div className="grid gap-16 md:grid-cols-[1fr_1.2fr]">
+        <div>
+          <h2 className="display" style={{ fontSize: "clamp(2rem, 1rem + 3vw, 3.4rem)" }}>
+            Elsewhere
+          </h2>
+          <ul className="mt-8 flex flex-col gap-4">
+            {SITE.socials.map((social) => (
+              <li key={social.label}>
+                <a
+                  className="link-arrow opacity-75 transition-opacity hover:opacity-100"
+                  href={social.href}
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  {social.label}
+                  <ArrowUpRight className="h-3.5 w-3.5" />
+                </a>
+              </li>
+            ))}
+            <li>
+              <a
+                className="link-arrow opacity-75 transition-opacity hover:opacity-100"
+                href={SITE.githubRepo}
+                target="_blank"
+                rel="noreferrer"
+              >
+                blog source
+                <ArrowUpRight className="h-3.5 w-3.5" />
+              </a>
+            </li>
+          </ul>
+        </div>
+
+        <div>
+          <h2 className="meta-label opacity-65">Index</h2>
+          <ol
+            className="mt-6 flex flex-col border-b"
+            style={{ borderColor: "color-mix(in oklab, var(--ghost) 14%, transparent)" }}
+          >
+            {posts.map((post, i) => {
+              const { accent } = getChapter(post.slug);
+              return (
+                <li key={post.slug}>
+                  <Link
+                    to="/posts/$slug"
+                    params={{ slug: post.slug }}
+                    className="group flex items-baseline gap-4 border-t py-3.5 transition-colors"
+                    style={{ borderColor: "color-mix(in oklab, var(--ghost) 14%, transparent)" }}
+                  >
+                    <span className="meta-label w-7 shrink-0 opacity-45">
+                      {String(i + 1).padStart(2, "0")}
+                    </span>
+                    <span
+                      className="min-w-0 flex-1 truncate text-[15px] font-medium transition-colors group-hover:[color:var(--row-accent)]"
+                      style={{ "--row-accent": accent } as React.CSSProperties}
+                    >
+                      {post.title}
+                    </span>
+                    <span className="meta-label hidden shrink-0 opacity-45 sm:inline">
+                      {formatDate(post.date)}
+                    </span>
+                  </Link>
+                </li>
+              );
+            })}
+          </ol>
+        </div>
       </div>
-    </motion.article>
+
+      <p className="meta-label max-w-[72ch] leading-relaxed opacity-45">
+        © 2026 Kayvane Shakerifar · every article is a system; each preview is that system running ·
+        built with TanStack Start &amp; Motion · set in Archivo &amp; Fragment Mono
+      </p>
+    </section>
   );
 }
 

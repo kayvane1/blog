@@ -2,7 +2,8 @@ import { Link, createFileRoute, notFound } from "@tanstack/react-router";
 import { ArrowLeft, ArrowUpRight } from "lucide-react";
 
 import { TagPill } from "../../components/TagPill";
-import { getPostBySlug } from "../../lib/posts";
+import { getChapter } from "../../lib/chapters";
+import { getAllPosts, getPostBySlug } from "../../lib/posts";
 import { SITE, absoluteUrl } from "../../lib/site";
 
 export const Route = createFileRoute("/posts/$slug")({
@@ -17,6 +18,7 @@ export const Route = createFileRoute("/posts/$slug")({
     return meta;
   },
   head: ({ loaderData }) => {
+    if (!loaderData) return {};
     const title = `${loaderData.title} | ${SITE.name}`;
     const description = loaderData.summary;
     const canonical = absoluteUrl(`/posts/${loaderData.slug}`);
@@ -84,46 +86,106 @@ function PostPage() {
   const post = Route.useLoaderData();
   const full = getPostBySlug(post.slug);
   const PostBody = full?.Component;
+  const { accent } = getChapter(post.slug);
+
+  const posts = getAllPosts();
+  const position = posts.findIndex((p) => p.slug === post.slug);
+  const newer = position > 0 ? posts[position - 1] : undefined;
+  const older = position >= 0 && position < posts.length - 1 ? posts[position + 1] : undefined;
 
   return (
-    <main className="min-h-screen px-6 pb-20 pt-12">
-      <div className="mx-auto flex max-w-3xl flex-col gap-8">
-        <Link className="link-arrow group w-fit" to="/">
-          <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-1" />
-          back to home
-        </Link>
+    <main
+      className="min-h-screen bg-[color:var(--page)] px-6 pb-24 pt-10 text-[color:var(--page-ink)]"
+      style={{ "--accent": accent } as React.CSSProperties}
+    >
+      <div className="mx-auto flex max-w-2xl flex-col">
+        <div className="flex items-baseline justify-between">
+          <Link
+            className="link-arrow group w-fit opacity-70 transition-opacity hover:opacity-100"
+            to="/"
+          >
+            <ArrowLeft className="h-3.5 w-3.5 transition-transform group-hover:-translate-x-1" />
+            index
+          </Link>
+          {post.github ? (
+            <a
+              className="link-arrow group opacity-70 transition-opacity hover:opacity-100"
+              href={post.github}
+              target="_blank"
+              rel="noreferrer"
+            >
+              repo
+              <ArrowUpRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-1" />
+            </a>
+          ) : null}
+        </div>
 
-        <article className="paper-card relative overflow-hidden px-6 py-10 md:px-10">
-          <div className="absolute inset-0 bg-gradient-to-br from-white via-white to-emerald-50/60" />
-          <div className="relative">
-            <div className="flex flex-wrap items-center justify-between gap-3 text-xs uppercase tracking-[0.2em] text-[color:var(--ink-muted)]">
-              <span className="font-mono">{formatDate(post.date)}</span>
-              <span className="font-mono">{post.readingTime}</span>
-            </div>
-            <h1 className="mt-4 text-3xl font-semibold text-[color:var(--ink)] md:text-4xl">
+        <article className="mt-16">
+          <header>
+            <p className="meta-label" style={{ color: "var(--accent-deep)" }}>
+              {formatDate(post.date)} · {post.readingTime}
+            </p>
+            <h1
+              className="display mt-5"
+              style={{ fontSize: "clamp(2.1rem, 1.2rem + 3.4vw, 3.6rem)" }}
+            >
               {post.title}
             </h1>
-            <p className="mt-3 text-base text-[color:var(--ink-muted)]">{post.summary}</p>
-            <div className="mt-5 flex flex-wrap gap-2">
+            <p className="mt-5 max-w-[58ch] text-lg leading-relaxed text-[color:var(--page-dim)]">
+              {post.summary}
+            </p>
+            <div className="mt-6 flex flex-wrap gap-2 text-[color:var(--page-dim)]">
               {post.tags.map((tag) => (
                 <TagPill key={tag}>{tag}</TagPill>
               ))}
             </div>
-            {post.github ? (
-              <div className="mt-6 flex flex-wrap gap-4 text-xs uppercase tracking-[0.2em] text-[color:var(--ink-muted)]">
-                <a className="link-arrow group" href={post.github} target="_blank" rel="noreferrer">
-                  repo
-                  <ArrowUpRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
-                </a>
-              </div>
-            ) : null}
-            <div className="mt-10 border-t border-black/5 pt-8">
-              <div className="post-content">{PostBody ? <PostBody /> : null}</div>
-            </div>
+          </header>
+
+          <div
+            className="mt-12 border-t pt-10"
+            style={{ borderColor: "color-mix(in oklab, var(--accent-deep) 35%, transparent)" }}
+          >
+            <div className="post-content">{PostBody ? <PostBody /> : null}</div>
           </div>
         </article>
+
+        {newer || older ? (
+          <nav
+            aria-label="More posts"
+            className="mt-20 grid gap-6 border-t pt-8 sm:grid-cols-2"
+            style={{ borderColor: "color-mix(in oklab, var(--page-ink) 12%, transparent)" }}
+          >
+            {older ? <AdjacentPost label="older" post={older} align="left" /> : <span />}
+            {newer ? <AdjacentPost label="newer" post={newer} align="right" /> : null}
+          </nav>
+        ) : null}
       </div>
     </main>
+  );
+}
+
+function AdjacentPost({
+  label,
+  post,
+  align,
+}: {
+  label: string;
+  post: { slug: string; title: string };
+  align: "left" | "right";
+}) {
+  const { accent } = getChapter(post.slug);
+  return (
+    <Link
+      to="/posts/$slug"
+      params={{ slug: post.slug }}
+      className={`group flex flex-col gap-2 ${align === "right" ? "sm:items-end sm:text-right" : ""}`}
+      style={{ "--row-accent": accent } as React.CSSProperties}
+    >
+      <span className="meta-label opacity-50">{label}</span>
+      <span className="text-[15px] font-semibold leading-snug transition-colors group-hover:[color:color-mix(in_oklab,var(--row-accent)_52%,black)]">
+        {post.title}
+      </span>
+    </Link>
   );
 }
 
