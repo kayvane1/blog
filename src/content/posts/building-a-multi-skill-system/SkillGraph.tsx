@@ -88,7 +88,8 @@ const PLAYBOOKS: Playbook[] = [
       {
         n: 1,
         title: "reproduce on the surface",
-        summary: "Drive the failing surface via the matching control skill. Don't hand the repro to the user.",
+        summary:
+          "Drive the failing surface via the matching control skill. Don't hand the repro to the user.",
         skills: ["control"],
         principles: ["prove-it-works"],
       },
@@ -168,7 +169,8 @@ const PLAYBOOKS: Playbook[] = [
   {
     id: "runtime-forensics",
     title: "runtime forensics",
-    purpose: "Diagnose a live runtime symptom from instrumentation. Deliverable: diagnosis, not fix.",
+    purpose:
+      "Diagnose a live runtime symptom from instrumentation. Deliverable: diagnosis, not fix.",
     chainsToOpeningPR: false,
     steps: [
       {
@@ -181,7 +183,8 @@ const PLAYBOOKS: Playbook[] = [
       {
         n: 2,
         title: "reduce to smoking gun",
-        summary: "Parse the large artifact in a subagent. Keep the reduced finding in the main thread.",
+        summary:
+          "Parse the large artifact in a subagent. Keep the reduced finding in the main thread.",
         skills: [],
         principles: ["guard-the-context-window"],
       },
@@ -324,7 +327,8 @@ const PLAYBOOKS: Playbook[] = [
       {
         n: 1,
         title: "pin the behavior contract",
-        summary: "Run how to learn the contract. Write a characterization test before touching structure.",
+        summary:
+          "Run how to learn the contract. Write a characterization test before touching structure.",
         skills: ["how"],
         principles: ["prove-it-works", "foundational-thinking"],
       },
@@ -345,7 +349,8 @@ const PLAYBOOKS: Playbook[] = [
       {
         n: 4,
         title: "move in small steps",
-        summary: "Each step keeps the pin green. Migrate every caller then delete the old API in one wave.",
+        summary:
+          "Each step keeps the pin green. Migrate every caller then delete the old API in one wave.",
         skills: ["composer-2.5-fast"],
         principles: ["migrate-callers-then-delete-legacy-apis"],
       },
@@ -374,7 +379,8 @@ const PLAYBOOKS: Playbook[] = [
       {
         n: 1,
         title: "scope the decision",
-        summary: "Name which layout, interaction, or density the prototype tests. No decision means no prototype.",
+        summary:
+          "Name which layout, interaction, or density the prototype tests. No decision means no prototype.",
         skills: [],
         principles: [],
       },
@@ -409,7 +415,8 @@ const PLAYBOOKS: Playbook[] = [
       {
         n: 6,
         title: "present alternatives",
-        summary: "Variants, tradeoffs, recommendation, scratch path. Hand to Feature if you decide to build.",
+        summary:
+          "Variants, tradeoffs, recommendation, scratch path. Hand to Feature if you decide to build.",
         skills: [],
         principles: [],
       },
@@ -445,7 +452,8 @@ const PLAYBOOKS: Playbook[] = [
       {
         n: 4,
         title: "verify via image diff",
-        summary: "Check each component against the baseline. Nonzero diff is a fail. Loop until zero.",
+        summary:
+          "Check each component against the baseline. Nonzero diff is a fail. Loop until zero.",
         skills: ["control"],
         principles: ["prove-it-works"],
       },
@@ -632,7 +640,8 @@ const PLAYBOOKS: Playbook[] = [
       {
         n: 1,
         title: "triage scope",
-        summary: "Skip plan for 1-2 files. Plan for 3+ files, architecture, or competing approaches.",
+        summary:
+          "Skip plan for 1-2 files. Plan for 3+ files, architecture, or competing approaches.",
         skills: [],
         principles: [],
       },
@@ -875,7 +884,8 @@ const WORKFLOW_SKILLS: WorkflowSkill[] = [
   {
     id: "composer-2.5-fast",
     title: "composer-2.5-fast",
-    summary: "Subagent model used for code-writing delegates. Tightly scoped prompt; parent reviews diff.",
+    summary:
+      "Subagent model used for code-writing delegates. Tightly scoped prompt; parent reviews diff.",
     principles: [],
     external: true,
     surface: "subagent",
@@ -908,25 +918,120 @@ const PRINCIPLE_GROUP_LABELS: Record<PrincipleGroup, string> = {
 };
 
 const PRINCIPLES: Principle[] = [
-  { id: "laziness-protocol", group: "core", title: "laziness protocol", summary: "Bias toward deletion and the smallest change." },
-  { id: "foundational-thinking", group: "core", title: "foundational thinking", summary: "Get data structures right before writing logic." },
-  { id: "redesign-from-first-principles", group: "core", title: "redesign from first principles", summary: "Redesign as if the new requirement had been foundational from day one." },
-  { id: "subtract-before-you-add", group: "core", title: "subtract before you add", summary: "Remove dead weight first, then build on the simpler base." },
-  { id: "minimize-reader-load", group: "core", title: "minimize reader load", summary: "Count layers and hidden state. Collapse one-caller wrappers." },
-  { id: "outcome-oriented-execution", group: "core", title: "outcome-oriented execution", summary: "Converge on the target architecture. Don't preserve throwaway compatibility." },
-  { id: "experience-first", group: "core", title: "experience first", summary: "Choose user delight over implementation convenience." },
-  { id: "exhaust-the-design-space", group: "core", title: "exhaust the design space", summary: "Build 2 to 3 competing prototypes before committing." },
-  { id: "build-the-lever", group: "core", title: "build the lever", summary: "Build the tool that amortizes the work once you know the recipe." },
-  { id: "boundary-discipline", group: "architecture", title: "boundary discipline", summary: "Guards at system boundaries. Trust internal types." },
-  { id: "type-system-discipline", group: "architecture", title: "type system discipline", summary: "Make illegal states unrepresentable. Brand primitives. Parse at boundaries." },
-  { id: "make-operations-idempotent", group: "architecture", title: "make operations idempotent", summary: "Operations converge to the same end state under crash and retry." },
-  { id: "migrate-callers-then-delete-legacy-apis", group: "architecture", title: "migrate callers then delete legacy APIs", summary: "Migrate and delete in one wave. No parallel APIs." },
-  { id: "separate-before-serializing-shared-state", group: "architecture", title: "separate before serializing shared state", summary: "Eliminate sharing first. Serialize structurally only when sharing is real." },
-  { id: "prove-it-works", group: "verification", title: "prove it works", summary: "Verify against the real artifact, not a proxy or 'it compiles'." },
-  { id: "fix-root-causes", group: "verification", title: "fix root causes", summary: "Reproduce first. Ask why until you reach root." },
-  { id: "guard-the-context-window", group: "delegation", title: "guard the context window", summary: "Route bulk to subagents. Keep summaries in the main thread." },
-  { id: "never-block-on-the-human", group: "delegation", title: "never block on the human", summary: "Proceed on reversible work. Let humans course-correct." },
-  { id: "encode-lessons-in-structure", group: "meta", title: "encode lessons in structure", summary: "Encode recurring lessons as lints, flags, runtime checks, or scripts." },
+  {
+    id: "laziness-protocol",
+    group: "core",
+    title: "laziness protocol",
+    summary: "Bias toward deletion and the smallest change.",
+  },
+  {
+    id: "foundational-thinking",
+    group: "core",
+    title: "foundational thinking",
+    summary: "Get data structures right before writing logic.",
+  },
+  {
+    id: "redesign-from-first-principles",
+    group: "core",
+    title: "redesign from first principles",
+    summary: "Redesign as if the new requirement had been foundational from day one.",
+  },
+  {
+    id: "subtract-before-you-add",
+    group: "core",
+    title: "subtract before you add",
+    summary: "Remove dead weight first, then build on the simpler base.",
+  },
+  {
+    id: "minimize-reader-load",
+    group: "core",
+    title: "minimize reader load",
+    summary: "Count layers and hidden state. Collapse one-caller wrappers.",
+  },
+  {
+    id: "outcome-oriented-execution",
+    group: "core",
+    title: "outcome-oriented execution",
+    summary: "Converge on the target architecture. Don't preserve throwaway compatibility.",
+  },
+  {
+    id: "experience-first",
+    group: "core",
+    title: "experience first",
+    summary: "Choose user delight over implementation convenience.",
+  },
+  {
+    id: "exhaust-the-design-space",
+    group: "core",
+    title: "exhaust the design space",
+    summary: "Build 2 to 3 competing prototypes before committing.",
+  },
+  {
+    id: "build-the-lever",
+    group: "core",
+    title: "build the lever",
+    summary: "Build the tool that amortizes the work once you know the recipe.",
+  },
+  {
+    id: "boundary-discipline",
+    group: "architecture",
+    title: "boundary discipline",
+    summary: "Guards at system boundaries. Trust internal types.",
+  },
+  {
+    id: "type-system-discipline",
+    group: "architecture",
+    title: "type system discipline",
+    summary: "Make illegal states unrepresentable. Brand primitives. Parse at boundaries.",
+  },
+  {
+    id: "make-operations-idempotent",
+    group: "architecture",
+    title: "make operations idempotent",
+    summary: "Operations converge to the same end state under crash and retry.",
+  },
+  {
+    id: "migrate-callers-then-delete-legacy-apis",
+    group: "architecture",
+    title: "migrate callers then delete legacy APIs",
+    summary: "Migrate and delete in one wave. No parallel APIs.",
+  },
+  {
+    id: "separate-before-serializing-shared-state",
+    group: "architecture",
+    title: "separate before serializing shared state",
+    summary: "Eliminate sharing first. Serialize structurally only when sharing is real.",
+  },
+  {
+    id: "prove-it-works",
+    group: "verification",
+    title: "prove it works",
+    summary: "Verify against the real artifact, not a proxy or 'it compiles'.",
+  },
+  {
+    id: "fix-root-causes",
+    group: "verification",
+    title: "fix root causes",
+    summary: "Reproduce first. Ask why until you reach root.",
+  },
+  {
+    id: "guard-the-context-window",
+    group: "delegation",
+    title: "guard the context window",
+    summary: "Route bulk to subagents. Keep summaries in the main thread.",
+  },
+  {
+    id: "never-block-on-the-human",
+    group: "delegation",
+    title: "never block on the human",
+    summary: "Proceed on reversible work. Let humans course-correct.",
+  },
+  {
+    id: "encode-lessons-in-structure",
+    group: "meta",
+    title: "encode lessons in structure",
+    summary: "Encode recurring lessons as lints, flags, runtime checks, or scripts.",
+  },
 ];
 
 const ACCENT = "#2e7d32";
@@ -1041,8 +1146,7 @@ export function SkillGraph() {
     skillsByPrinciple,
   ]);
 
-  const isFocused = (kind: NodeKind, id: string) =>
-    selection.kind === kind && selection.id === id;
+  const isFocused = (kind: NodeKind, id: string) => selection.kind === kind && selection.id === id;
 
   const isLit = (kind: NodeKind, id: string) => {
     if (kind === "playbook") return lit.litPlaybooks.has(id);
@@ -1101,9 +1205,7 @@ export function SkillGraph() {
           : "referenced indirectly",
       );
       if (s.principles.length > 0) {
-        stats.push(
-          `cites ${s.principles.length} principle${s.principles.length === 1 ? "" : "s"}`,
-        );
+        stats.push(`cites ${s.principles.length} principle${s.principles.length === 1 ? "" : "s"}`);
       }
       const kindLabel =
         s.surface === "subagent"
@@ -1227,8 +1329,8 @@ export function SkillGraph() {
           </div>
           <div className="font-mono text-[12.5px] text-[color:var(--ink)]">/poteto-mode</div>
           <div className="mt-1 max-w-[64ch] font-sans text-[12.5px] leading-[1.5] text-[color:var(--ink-muted)]">
-            One skill. Indexes every principle inline, then routes to one of fifteen playbooks
-            based on the task.
+            One skill. Indexes every principle inline, then routes to one of fifteen playbooks based
+            on the task.
           </div>
         </div>
       </button>
@@ -1277,8 +1379,8 @@ export function SkillGraph() {
       <footer className="mt-5 flex items-center gap-2 border-t border-black/10 pt-4 font-mono text-[10.5px] text-[color:var(--ink-muted)]">
         <Box size={11} strokeWidth={2} />
         <span>
-          tap a playbook to see its step DAG with the skills and principles each step pulls in.
-          tap a workflow skill or principle to see the catalog with everything that uses it lit.
+          tap a playbook to see its step DAG with the skills and principles each step pulls in. tap
+          a workflow skill or principle to see the catalog with everything that uses it lit.
         </span>
       </footer>
     </figure>
@@ -1326,9 +1428,17 @@ function DagView({
                 onClick={() => onSelect({ kind: "playbook", id: openingPR.id })}
                 className="flex w-full items-center gap-3 rounded-xl border border-dashed border-[#2e7d32]/40 bg-[rgba(46,125,50,0.04)] px-4 py-3 text-left transition-colors duration-200 hover:border-[#2e7d32] hover:bg-[rgba(46,125,50,0.1)]"
               >
-                <ArrowRight size={14} strokeWidth={2} style={{ color: ACCENT }} className="shrink-0" />
+                <ArrowRight
+                  size={14}
+                  strokeWidth={2}
+                  style={{ color: ACCENT }}
+                  className="shrink-0"
+                />
                 <div className="min-w-0">
-                  <div className="font-mono text-[10px] font-semibold uppercase tracking-[0.22em]" style={{ color: ACCENT }}>
+                  <div
+                    className="font-mono text-[10px] font-semibold uppercase tracking-[0.22em]"
+                    style={{ color: ACCENT }}
+                  >
                     chains to playbook
                   </div>
                   <div className="font-mono text-[12px] text-[color:var(--ink)]">
@@ -1338,7 +1448,11 @@ function DagView({
                     {openingPR.purpose}
                   </div>
                 </div>
-                <ChevronDown size={14} strokeWidth={2} className="ml-auto shrink-0 text-[color:var(--ink-muted)]" />
+                <ChevronDown
+                  size={14}
+                  strokeWidth={2}
+                  className="ml-auto shrink-0 text-[color:var(--ink-muted)]"
+                />
               </button>
             </li>
           </>
@@ -1482,7 +1596,11 @@ function CatalogView({
                     <span className="font-semibold">{s.title}</span>
                     {s.external ? (
                       <span className="rounded-sm border border-black/15 px-1 py-px text-[8.5px] uppercase tracking-[0.18em] text-[color:var(--ink-muted)]">
-                        {s.surface === "subagent" ? "agent" : s.surface === "control" ? "ctrl" : "ext"}
+                        {s.surface === "subagent"
+                          ? "agent"
+                          : s.surface === "control"
+                            ? "ctrl"
+                            : "ext"}
                       </span>
                     ) : null}
                   </span>

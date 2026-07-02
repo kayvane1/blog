@@ -78,7 +78,7 @@ Once that clicked, the pattern is: parent's on a thinking model, reviewing the w
 
 This is what the README is calling "fearless parallelism" and I think I finally get it. The usual worry with fan-outs is that children drift from the parent's intent, and pstack's answer here is just to give every child a wrapper whose only job is to load the same operating manual before it touches the work.
 
-A couple of edges that are worth knowing. Some workflow skills (`how`, `why`, `interrogate`, `reflect`) configure their *own* `subagent_type` because their value comes from mixing model families adversarially. The rule is to default to `poteto-agent` for direct delegates inside a playbook step, but respect the routed skill's own prescription when you're going through one of them — don't paper over it.
+A couple of edges that are worth knowing. Some workflow skills (`how`, `why`, `interrogate`, `reflect`) configure their _own_ `subagent_type` because their value comes from mixing model families adversarially. The rule is to default to `poteto-agent` for direct delegates inside a playbook step, but respect the routed skill's own prescription when you're going through one of them — don't paper over it.
 
 The other one, called out explicitly in `references/plan.md`, is that you shouldn't use Cursor's built-in `plan` subagent type. It brings its own system prompt and ignores this skill entirely. `generalPurpose` is the fallback if `poteto-agent` isn't available, but the README is direct about what happens there: "substituting `generalPurpose` skips that read and drifts".
 

@@ -26,7 +26,7 @@ const FRAMES: Frame[] = [
     title: "Task() calls go out",
     short: "spawn",
     caption:
-      "Parent emits three Task calls. Each one names subagent_type: \"poteto-agent\" with a different model argument.",
+      'Parent emits three Task calls. Each one names subagent_type: "poteto-agent" with a different model argument.',
   },
   {
     name: "wrap",
@@ -186,7 +186,10 @@ export function FanOutDiagram() {
       </header>
 
       {/* stage */}
-      <div className="relative w-full rounded-[0.85rem] border border-black/10 bg-black/[0.015]" style={{ height: 420 }}>
+      <div
+        className="relative w-full rounded-[0.85rem] border border-black/10 bg-black/[0.015]"
+        style={{ height: 420 }}
+      >
         {/* parent */}
         <div
           className={`absolute -translate-x-1/2 -translate-y-1/2 rounded-lg border bg-white px-3.5 py-2 text-center transition-[border-color,background-color] duration-300 ${parentActive ? "border-[#2e7d32] bg-[rgba(46,125,50,0.14)]" : "border-black/15"}`}
@@ -272,10 +275,7 @@ export function FanOutDiagram() {
         })}
 
         {/* connector lines */}
-        <svg
-          className="pointer-events-none absolute inset-0 h-full w-full"
-          aria-hidden
-        >
+        <svg className="pointer-events-none absolute inset-0 h-full w-full" aria-hidden>
           {CHILDREN.map((c) => (
             <line
               key={`line-${c.id}`}
@@ -297,7 +297,12 @@ export function FanOutDiagram() {
           const isActive = i === frameIndex;
           const isDone = i < frameIndex;
           return (
-            <div key={f.name} className="min-w-0 flex-shrink" style={{ flex: f.duration }} role="listitem">
+            <div
+              key={f.name}
+              className="min-w-0 flex-shrink"
+              style={{ flex: f.duration }}
+              role="listitem"
+            >
               <button
                 type="button"
                 className={`${TIMELINE_BTN} ${
