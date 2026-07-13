@@ -84,15 +84,30 @@ export const Route = createFileRoute("/")({
  */
 const WRAPPER_VH = 280;
 const PLAY_SECONDS = 5;
+const MOTION_OVERRIDE_KEY = "kayvane:full-motion";
 /** Wrapper progress at which the next chapter starts covering this one. */
 const EXIT_START = 1 - 100 / (WRAPPER_VH - 100);
 
 function Home() {
   const posts = getAllPosts();
-  const reduced = useReducedMotion() ?? false;
+  const prefersReducedMotion = useReducedMotion() ?? false;
+  const [forceMotion, setForceMotion] = useState(
+    () =>
+      typeof window !== "undefined" &&
+      window.localStorage.getItem(MOTION_OVERRIDE_KEY) === "enabled",
+  );
+  const reduced = prefersReducedMotion && !forceMotion;
   // −1 = intro; 0..n−1 = chapters
   const [activeIndex, setActiveIndex] = useState(-1);
   const onActive = useCallback((index: number) => setActiveIndex(index), []);
+
+  const onToggleMotion = useCallback(() => {
+    setForceMotion((current) => {
+      const next = !current;
+      window.localStorage.setItem(MOTION_OVERRIDE_KEY, next ? "enabled" : "system");
+      return next;
+    });
+  }, []);
 
   // Overscroll / scrollbar gutter should be ink on the deck, not reader-white.
   useEffect(() => {
@@ -114,6 +129,9 @@ function Home() {
         reduced={reduced}
         active={activeIndex === -1}
         onActive={onActive}
+        showMotionPreference={prefersReducedMotion}
+        fullMotionEnabled={forceMotion}
+        onToggleMotion={onToggleMotion}
       />
 
       {posts.map((post, index) => (
@@ -247,11 +265,17 @@ function IntroPanel({
   reduced,
   active,
   onActive,
+  showMotionPreference,
+  fullMotionEnabled,
+  onToggleMotion,
 }: {
   postCount: number;
   reduced: boolean;
   active: boolean;
   onActive: (index: number) => void;
+  showMotionPreference: boolean;
+  fullMotionEnabled: boolean;
+  onToggleMotion: () => void;
 }) {
   const ref = useRef<HTMLElement>(null);
   const { scrollYProgress } = useScroll({
@@ -310,6 +334,16 @@ function IntroPanel({
           <p className="meta-label mt-10 opacity-65">
             {postCount} articles · each preview is the system, running
           </p>
+          {showMotionPreference ? (
+            <button
+              type="button"
+              className="link-arrow mt-6 min-h-11 border px-4 opacity-75 transition-opacity hover:opacity-100"
+              style={{ borderColor: "color-mix(in oklab, var(--ghost) 24%, transparent)" }}
+              onClick={onToggleMotion}
+            >
+              {fullMotionEnabled ? "use reduced motion" : "play animations"}
+            </button>
+          ) : null}
         </div>
 
         {/* scroll cue */}
