@@ -101,7 +101,7 @@ function PostPage() {
       <div className="mx-auto flex max-w-2xl flex-col">
         <div className="flex items-baseline justify-between">
           <Link
-            className="link-arrow group w-fit opacity-70 transition-opacity hover:opacity-100"
+            className="link-arrow group min-h-11 w-fit opacity-70 transition-opacity hover:opacity-100"
             to="/"
           >
             <ArrowLeft className="h-3.5 w-3.5 transition-transform group-hover:-translate-x-1" />
@@ -109,7 +109,7 @@ function PostPage() {
           </Link>
           {post.github ? (
             <a
-              className="link-arrow group opacity-70 transition-opacity hover:opacity-100"
+              className="link-arrow group min-h-11 opacity-70 transition-opacity hover:opacity-100"
               href={post.github}
               target="_blank"
               rel="noreferrer"

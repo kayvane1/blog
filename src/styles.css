@@ -168,10 +168,14 @@ a {
 
 .post-content table {
   margin-top: 1.75rem;
+  display: block;
   width: 100%;
+  max-width: 100%;
+  overflow-x: auto;
   border-collapse: collapse;
   font-size: 0.85rem;
   line-height: 1.5;
+  -webkit-overflow-scrolling: touch;
 }
 
 .post-content th,
@@ -216,6 +220,11 @@ a {
   padding: 0.1rem 0.35rem;
 }
 
+.post-content :not(pre) > code {
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
 .post-content pre code {
   background: transparent;
   padding: 0;
@@ -228,6 +237,42 @@ a {
   margin-top: 1.75rem;
   border-radius: 0.5rem;
   border: 1px solid color-mix(in oklab, var(--page-ink) 10%, transparent);
+}
+
+/* Short phones cannot carry the full desktop-like chapter stack. Preserve the
+   system preview, summary, title, and read action; condense tag metadata. */
+@media (max-width: 47.999rem) and (max-height: 40rem) {
+  .chapter-meta {
+    padding-top: 3.5rem;
+  }
+
+  .chapter-scene {
+    padding-block: 0.25rem;
+  }
+
+  .chapter-copy {
+    padding-bottom: 1.5rem;
+  }
+
+  .chapter-title {
+    font-size: clamp(1.55rem, 8vw, 1.85rem) !important;
+  }
+
+  .chapter-tags {
+    margin-top: 0.75rem;
+    flex-wrap: nowrap;
+    overflow: hidden;
+  }
+
+  .chapter-tags > :nth-child(n + 3) {
+    display: none;
+  }
+
+  .chapter-action {
+    min-height: 2.75rem;
+    margin-top: 0.5rem;
+    align-items: center;
+  }
 }
 
 /* ---------- Keyframes ---------- */

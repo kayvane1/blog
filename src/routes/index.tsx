@@ -6,7 +6,6 @@ import {
   useInView,
   useMotionValue,
   useMotionValueEvent,
-  useReducedMotion,
   useScroll,
   useTransform,
 } from "framer-motion";
@@ -84,15 +83,28 @@ export const Route = createFileRoute("/")({
  */
 const WRAPPER_VH = 280;
 const PLAY_SECONDS = 5;
+const REDUCED_MOTION_KEY = "kayvane:reduced-motion";
 /** Wrapper progress at which the next chapter starts covering this one. */
 const EXIT_START = 1 - 100 / (WRAPPER_VH - 100);
 
 function Home() {
   const posts = getAllPosts();
-  const reduced = useReducedMotion() ?? false;
+  const [reduced, setReduced] = useState(
+    () =>
+      typeof window !== "undefined" &&
+      window.localStorage.getItem(REDUCED_MOTION_KEY) === "enabled",
+  );
   // −1 = intro; 0..n−1 = chapters
   const [activeIndex, setActiveIndex] = useState(-1);
   const onActive = useCallback((index: number) => setActiveIndex(index), []);
+
+  const onToggleMotion = useCallback(() => {
+    setReduced((current) => {
+      const next = !current;
+      window.localStorage.setItem(REDUCED_MOTION_KEY, next ? "enabled" : "disabled");
+      return next;
+    });
+  }, []);
 
   // Overscroll / scrollbar gutter should be ink on the deck, not reader-white.
   useEffect(() => {
@@ -114,6 +126,7 @@ function Home() {
         reduced={reduced}
         active={activeIndex === -1}
         onActive={onActive}
+        onToggleMotion={onToggleMotion}
       />
 
       {posts.map((post, index) => (
@@ -135,17 +148,20 @@ function Home() {
 function DeckHeader() {
   return (
     <header
-      className="fixed inset-x-0 top-0 flex items-baseline justify-between px-6 py-5 md:px-14"
+      className="fixed inset-x-0 top-0 flex items-center justify-between px-4 py-2 sm:items-baseline sm:px-6 sm:py-5 md:px-14"
       style={{ zIndex: "var(--z-chrome)" }}
     >
-      <a href="#top" className="text-sm font-semibold tracking-tight">
+      <a
+        href="#top"
+        className="inline-flex min-h-11 shrink-0 items-center text-sm font-semibold tracking-tight"
+      >
         Kayvane Shakerifar
       </a>
-      <nav aria-label="Social links" className="flex items-baseline gap-4 md:gap-6">
+      <nav aria-label="Social links" className="hidden items-baseline gap-4 sm:flex md:gap-6">
         {SITE.socials.map((social) => (
           <a
             key={social.label}
-            className="meta-label opacity-65 transition-opacity hover:opacity-100"
+            className="meta-label inline-flex min-h-11 items-center opacity-65 transition-opacity hover:opacity-100"
             href={social.href}
             target="_blank"
             rel="noreferrer"
@@ -154,6 +170,28 @@ function DeckHeader() {
           </a>
         ))}
       </nav>
+      <details className="relative sm:hidden">
+        <summary className="meta-label flex min-h-11 cursor-pointer list-none items-center px-2 opacity-70 [&::-webkit-details-marker]:hidden">
+          links
+        </summary>
+        <nav
+          aria-label="Social links"
+          className="absolute right-0 top-full flex w-40 flex-col border bg-[color:var(--ink)] p-1 shadow-2xl"
+          style={{ borderColor: "color-mix(in oklab, var(--ghost) 18%, transparent)" }}
+        >
+          {SITE.socials.map((social) => (
+            <a
+              key={social.label}
+              className="meta-label flex min-h-11 items-center justify-end px-3 opacity-75 transition-opacity hover:opacity-100"
+              href={social.href}
+              target="_blank"
+              rel="noreferrer"
+            >
+              {social.label}
+            </a>
+          ))}
+        </nav>
+      </details>
     </header>
   );
 }
@@ -222,11 +260,13 @@ function IntroPanel({
   reduced,
   active,
   onActive,
+  onToggleMotion,
 }: {
   postCount: number;
   reduced: boolean;
   active: boolean;
   onActive: (index: number) => void;
+  onToggleMotion: () => void;
 }) {
   const ref = useRef<HTMLElement>(null);
   const { scrollYProgress } = useScroll({
@@ -285,6 +325,14 @@ function IntroPanel({
           <p className="meta-label mt-10 opacity-65">
             {postCount} articles · each preview is the system, running
           </p>
+          <button
+            type="button"
+            className="link-arrow mt-6 min-h-11 border px-4 opacity-75 transition-opacity hover:opacity-100"
+            style={{ borderColor: "color-mix(in oklab, var(--ghost) 24%, transparent)" }}
+            onClick={onToggleMotion}
+          >
+            {reduced ? "play animations" : "use reduced motion"}
+          </button>
         </div>
 
         {/* scroll cue */}
@@ -392,7 +440,7 @@ function ChapterSection({
         />
 
         {/* chapter meta */}
-        <div className="relative flex items-baseline justify-between px-6 pt-16 md:absolute md:inset-x-0 md:top-0 md:px-14 md:pt-20">
+        <div className="chapter-meta relative flex items-baseline justify-between px-6 pt-16 md:absolute md:inset-x-0 md:top-0 md:px-14 md:pt-20">
           <span className="meta-label" style={{ color: accent }}>
             {String(index + 1).padStart(2, "0")} / {String(total).padStart(2, "0")}
           </span>
@@ -405,15 +453,15 @@ function ChapterSection({
             text below doesn't need — no masks, nothing cropped. Desktop: an
             absolute column disjoint from the text column, so no title length
             or viewport size can collide with the scene. */}
-        <div className="pointer-events-none relative min-h-0 flex-1 px-3 py-4 md:absolute md:inset-y-0 md:left-auto md:right-0 md:h-full md:w-[50%] md:p-0 xl:w-[54%] lg:pr-24">
+        <div className="chapter-scene pointer-events-none relative min-h-0 flex-1 px-3 py-4 md:absolute md:inset-y-0 md:left-auto md:right-0 md:h-full md:w-[50%] md:p-0 xl:w-[54%] lg:pr-24">
           <Hero progress={playback} active={playing} accent={accent} reduced={reduced} />
         </div>
 
         {/* chapter content */}
-        <div className="relative px-6 pb-14 md:absolute md:inset-x-0 md:bottom-0 md:max-w-[48%] xl:max-w-[44%] md:px-14 md:pb-20">
+        <div className="chapter-copy relative px-6 pb-14 md:absolute md:inset-x-0 md:bottom-0 md:max-w-[48%] xl:max-w-[44%] md:px-14 md:pb-20">
           <h2
             id={titleId}
-            className="display break-words"
+            className="chapter-title display break-words"
             style={{ fontSize: "clamp(1.85rem, 0.7rem + 3.3vw, 3.9rem)" }}
           >
             <Link
@@ -439,12 +487,12 @@ function ChapterSection({
           >
             {post.summary}
           </p>
-          <div className="mt-6 flex flex-wrap gap-2" style={{ color: accent }}>
+          <div className="chapter-tags mt-6 flex flex-wrap gap-2" style={{ color: accent }}>
             {post.tags.map((tag) => (
               <TagPill key={tag}>{tag}</TagPill>
             ))}
           </div>
-          <div className="link-arrow mt-8" style={{ color: accent }}>
+          <div className="chapter-action link-arrow mt-8" style={{ color: accent }}>
             read the post
             <ArrowUpRight className="h-4 w-4" />
           </div>
@@ -487,16 +535,16 @@ function OutroPanel({
       className="relative flex min-h-dvh flex-col justify-between gap-16 px-6 pb-10 pt-28 md:px-14"
       style={{ zIndex, backgroundColor: "var(--ink)" }}
     >
-      <div className="grid gap-16 md:grid-cols-[1fr_1.2fr]">
-        <div>
+      <div className="grid grid-cols-[minmax(0,1fr)] gap-16 md:grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)]">
+        <div className="min-w-0">
           <h2 className="display" style={{ fontSize: "clamp(2rem, 1rem + 3vw, 3.4rem)" }}>
             Elsewhere
           </h2>
-          <ul className="mt-8 flex flex-col gap-4">
+          <ul className="mt-5 flex flex-col">
             {SITE.socials.map((social) => (
               <li key={social.label}>
                 <a
-                  className="link-arrow opacity-75 transition-opacity hover:opacity-100"
+                  className="link-arrow min-h-11 opacity-75 transition-opacity hover:opacity-100"
                   href={social.href}
                   target="_blank"
                   rel="noreferrer"
@@ -508,7 +556,7 @@ function OutroPanel({
             ))}
             <li>
               <a
-                className="link-arrow opacity-75 transition-opacity hover:opacity-100"
+                className="link-arrow min-h-11 opacity-75 transition-opacity hover:opacity-100"
                 href={SITE.githubRepo}
                 target="_blank"
                 rel="noreferrer"
@@ -520,7 +568,7 @@ function OutroPanel({
           </ul>
         </div>
 
-        <div>
+        <div className="min-w-0">
           <h2 className="meta-label opacity-65">Index</h2>
           <ol
             className="mt-6 flex flex-col border-b"
